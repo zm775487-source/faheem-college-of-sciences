@@ -1,0 +1,1 @@
+{"description":"Backend for Faheem College of Science, Sanawan — management dashboard, student portal and teacher portal API.","engines":{"node":">=18"},"license":"UNLICENSED","main":"server.js","name":"faheem-college-of-science-backend","private":true,"scripts":{"start":"node server.js"},"version":"1.0.0"}
