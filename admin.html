@@ -1,0 +1,609 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Management Dashboard — Faheem College of Science, Sanawan</title>
+<style>
+  :root{
+    --bg:#fdf6cf; --surface:#ffffff; --surface-2:#f8ecc0; --ink:#1c2420; --ink-soft:#47524c;
+    --line:#e2d3a2; --green:#14532d; --green-deep:#0d3b21; --gold:#b8860b; --gold-soft:#f5e9c8;
+    --error:#b3261e; --error-bg:#fdecea; --ok:#1d7a46; --ok-bg:#e7f6ec;
+    --shadow:0 10px 30px rgba(20,40,28,.10); --radius:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Georgia,'Times New Roman',serif;background:var(--bg);color:var(--ink)}
+  .topbar{background:var(--green-deep);color:#f3f1e6;border-bottom:3px solid var(--gold);padding:14px 0}
+  .wrap{max-width:1060px;margin:0 auto;padding:0 18px}
+  .topbar .wrap{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .brand{font-size:1.15rem;font-weight:bold}
+  .brand span{color:var(--gold-soft);font-weight:normal}
+  main{padding:26px 0 60px}
+  h1{color:var(--green-deep);font-size:1.7rem;margin:0 0 6px}
+  h2{color:var(--green-deep);font-size:1.25rem;margin:0 0 12px}
+  .sub{color:var(--ink-soft);margin:0 0 20px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px;margin-bottom:20px}
+  .field{margin-bottom:14px}
+  label{display:block;font-weight:bold;margin-bottom:6px;font-size:.95rem}
+  label .hint{font-weight:normal;color:var(--ink-soft);font-size:.85rem}
+  input,select,textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:9px;font:inherit;background:#fff}
+  textarea{resize:vertical}
+  .btn{display:inline-block;border:none;cursor:pointer;border-radius:999px;padding:11px 22px;font:inherit;font-weight:bold;text-decoration:none}
+  .btn-gold{background:var(--gold);color:#221a02}
+  .btn-green{background:var(--green);color:#fff}
+  .btn-ghost{background:transparent;border:1.5px solid var(--green);color:var(--green)}
+  .btn-danger{background:var(--error);color:#fff}
+  .btn-small{padding:7px 14px;font-size:.9rem}
+  .btn[disabled]{opacity:.55;cursor:wait}
+  .error{display:none;background:var(--error-bg);color:var(--error);border:1px solid var(--error);border-radius:9px;padding:11px 14px;margin-bottom:14px}
+  .error.show{display:block}
+  .note{display:none;border-radius:9px;padding:11px 14px;margin-bottom:14px}
+  .note.show{display:block}
+  .note.warn{background:#fff6d8;border:1px solid var(--gold);color:#6b5205}
+  .note.ok{background:var(--ok-bg);border:1px solid var(--ok);color:var(--green-deep)}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+  .tab{border:1.5px solid var(--green);background:transparent;color:var(--green);border-radius:999px;padding:9px 18px;font:inherit;font-weight:bold;cursor:pointer}
+  .tab.active{background:var(--green);color:#fff}
+  .badge{display:inline-block;border-radius:999px;padding:2px 11px;font-size:.8rem;font-weight:bold}
+  .b-pending{background:#fff3cd;color:#7a5b00}
+  .b-confirmed{background:var(--ok-bg);color:var(--ok)}
+  .b-declined{background:var(--error-bg);color:var(--error)}
+  table{width:100%;border-collapse:collapse}
+  th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top;font-size:.95rem}
+  th{color:var(--green-deep)}
+  .row-click{cursor:pointer}
+  .row-click:hover{background:var(--gold-soft)}
+  .detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:6px 22px;margin-bottom:8px}
+  .detail-grid .d span{display:block;color:var(--ink-soft);font-size:.83rem}
+  .docs{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0}
+  .docs figure{margin:0;text-align:center}
+  .docs img{width:130px;height:130px;object-fit:cover;border:1px solid var(--line);border-radius:9px;background:#fff}
+  .docs figcaption{font-size:.82rem;color:var(--ink-soft);margin-top:4px}
+  .list-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--line)}
+  .list-row .who strong{display:block}
+  .list-row .who span{color:var(--ink-soft);font-size:.88rem}
+  .empty{color:var(--ink-soft);font-style:italic}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .chip{border:1.5px solid var(--gold);background:transparent;color:#6b5205;border-radius:999px;padding:6px 14px;font:inherit;cursor:pointer}
+  .chip.active{background:var(--gold);color:#221a02;font-weight:bold}
+  .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+  .hidden{display:none!important}
+  @media (max-width:640px){ .docs img{width:100px;height:100px} }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand">Faheem College <span>of Science — Sanawan</span></div>
+    <button type="button" class="btn btn-gold btn-small hidden" id="signout-btn">Sign out</button>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <h1>Management Dashboard</h1>
+    <p class="sub">For college management only. Student registrations and admission applications arrive here — confirm or decline each application, post announcements, and manage courses. Everything saved here appears on the front portal.</p>
+
+    <!-- Login -->
+    <div class="card" id="login-card">
+      <h2>Management access</h2>
+      <div class="error" id="login-error" role="alert"></div>
+      <form id="login-form" novalidate>
+        <div class="field">
+          <label for="admin-code">Management Access Code <span class="hint">(held by the college administration)</span></label>
+          <input id="admin-code" type="password" placeholder="Access code" autocomplete="off" />
+        </div>
+        <button type="submit" class="btn btn-gold">Open Dashboard</button>
+      </form>
+      <p class="sub" style="margin-top:14px;" id="server-state">Connecting to the college server…</p>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dash" class="hidden">
+      <div class="note warn" id="email-warn">Email is not configured on the server yet — confirm/decline decisions will be recorded, but no email will be sent to students until the college email is set up on the server.</div>
+
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab active" data-tab="applications">Applications</button>
+        <button type="button" class="tab" data-tab="registrations">Registrations</button>
+        <button type="button" class="tab" data-tab="students">Confirmed Students</button>
+        <button type="button" class="tab" data-tab="announcements">Announcements</button>
+        <button type="button" class="tab" data-tab="courses">Courses</button>
+      </div>
+
+      <!-- Applications -->
+      <section id="tab-applications">
+        <div class="card">
+          <h2>Admission Applications</h2>
+          <div class="chips" id="app-chips">
+            <button type="button" class="chip active" data-filter="pending">Pending</button>
+            <button type="button" class="chip" data-filter="confirmed">Confirmed</button>
+            <button type="button" class="chip" data-filter="declined">Declined</button>
+            <button type="button" class="chip" data-filter="all">All</button>
+          </div>
+          <div class="error" id="apps-error" role="alert"></div>
+          <div id="apps-list"></div>
+        </div>
+        <div class="card hidden" id="app-detail"></div>
+      </section>
+
+      <!-- Registrations -->
+      <section id="tab-registrations" class="hidden">
+        <div class="card">
+          <h2>Student Registrations</h2>
+          <p class="sub">Students who created an account on the portal.</p>
+          <div id="regs-list"></div>
+        </div>
+      </section>
+
+      <!-- Confirmed students -->
+      <section id="tab-students" class="hidden">
+        <div class="card">
+          <h2>Confirmed Students</h2>
+          <p class="sub">These students can open the Student Portal with their username and unique ID. Removing a student takes away their portal access.</p>
+          <div id="students-list"></div>
+        </div>
+      </section>
+
+      <!-- Announcements -->
+      <section id="tab-announcements" class="hidden">
+        <div class="card">
+          <h2>Post an Announcement</h2>
+          <div class="error" id="ann-error" role="alert"></div>
+          <div class="note ok" id="ann-ok"></div>
+          <form id="ann-form" novalidate>
+            <div class="field">
+              <label for="ann-title">Title</label>
+              <input id="ann-title" type="text" placeholder="e.g. Winter timetable" />
+            </div>
+            <div class="field">
+              <label for="ann-text">Announcement</label>
+              <textarea id="ann-text" rows="3" placeholder="Write the announcement…"></textarea>
+            </div>
+            <div class="field">
+              <label for="ann-aud">Show to</label>
+              <select id="ann-aud">
+                <option value="everyone">Everyone (front portal)</option>
+                <option value="students">Students only (student portal)</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-gold">Post Announcement</button>
+          </form>
+          <div id="ann-list" style="margin-top:16px;"></div>
+        </div>
+      </section>
+
+      <!-- Courses -->
+      <section id="tab-courses" class="hidden">
+        <div class="card">
+          <h2>Courses (Programs)</h2>
+          <p class="sub">Add a course or remove one — the front portal's Programs section and the application form update at once.</p>
+          <div class="error" id="course-error" role="alert"></div>
+          <div class="note ok" id="course-ok"></div>
+          <form id="course-form" novalidate>
+            <div class="grid2">
+              <div class="field">
+                <label for="course-name">Course name</label>
+                <input id="course-name" type="text" placeholder="e.g. FSc Pre-Medical" />
+              </div>
+              <div class="field">
+                <label for="course-code">Short label <span class="hint">(shown above the name)</span></label>
+                <input id="course-code" type="text" placeholder="e.g. FSc · Pre-Medical" />
+              </div>
+            </div>
+            <div class="field">
+              <label for="course-desc">Description</label>
+              <textarea id="course-desc" rows="2" placeholder="What is this course for, and who should choose it?"></textarea>
+            </div>
+            <div class="field">
+              <label for="course-subjects">Subjects <span class="hint">(separate with commas)</span></label>
+              <input id="course-subjects" type="text" placeholder="e.g. Biology, Chemistry, Physics" />
+            </div>
+            <button type="submit" class="btn btn-gold">Add Course</button>
+          </form>
+          <div id="course-list" style="margin-top:16px;"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<script>
+(function () {
+  var API_HOST = "https://faheem-college-api.onrender.com";
+  var API_BASE = API_HOST;
+  if (location.hostname && !/github\.io$/i.test(location.hostname) && location.protocol.indexOf("http") === 0) API_BASE = "";
+  try { var q = new URLSearchParams(location.search).get("api"); if (q !== null) API_BASE = q; } catch (e) {}
+
+  var adminCode = "";
+  var applications = [];
+  var appFilter = "pending";
+  var openAppId = null;
+
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function api(path, opts) {
+    opts = opts || {};
+    opts.headers = opts.headers || {};
+    if (adminCode) opts.headers["X-Admin-Code"] = adminCode;
+    if (opts.body && !opts.headers["Content-Type"]) opts.headers["Content-Type"] = "application/json";
+    return fetch(API_BASE + path, opts).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) { return { status: r.status, body: j }; });
+    });
+  }
+  function showError(id, msg) {
+    var e = document.getElementById(id);
+    if (!e) return;
+    if (msg) { e.textContent = msg; e.classList.add("show"); } else e.classList.remove("show");
+  }
+  function fmtDate(iso) {
+    if (!iso) return "—";
+    var d = new Date(iso);
+    return isNaN(d) ? String(iso) : d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  }
+
+  // ---------- connection state ----------
+  var serverState = document.getElementById("server-state");
+  api("/api/health").then(function (r) {
+    if (r.status === 200 && r.body.ok) {
+      serverState.textContent = "College server is connected. Enter the management access code to continue.";
+    } else {
+      serverState.textContent = "The college server did not answer. The dashboard works once the server is live — please try again later.";
+    }
+  }).catch(function () {
+    serverState.textContent = "The college server could not be reached. The dashboard works once the server is live — please try again later.";
+  });
+
+  // ---------- login ----------
+  document.getElementById("login-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var code = document.getElementById("admin-code").value;
+    showError("login-error", "");
+    fetch(API_BASE + "/api/admin/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: code })
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) { return { status: r.status, body: j }; });
+    }).then(function (r) {
+      if (r.status !== 200) {
+        showError("login-error", (r.body && r.body.error) || "Incorrect access code.");
+        return;
+      }
+      adminCode = code;
+      document.getElementById("login-card").classList.add("hidden");
+      document.getElementById("dash").classList.remove("hidden");
+      document.getElementById("signout-btn").classList.remove("hidden");
+      if (!r.body.emailConfigured) document.getElementById("email-warn").classList.add("show");
+      loadAll();
+    }).catch(function () {
+      showError("login-error", "The college server could not be reached. Please try again later.");
+    });
+  });
+  document.getElementById("signout-btn").addEventListener("click", function () { location.reload(); });
+
+  // ---------- tabs ----------
+  var tabs = document.querySelectorAll(".tab");
+  tabs.forEach(function (t) {
+    t.addEventListener("click", function () {
+      tabs.forEach(function (x) { x.classList.toggle("active", x === t); });
+      ["applications", "registrations", "students", "announcements", "courses"].forEach(function (name) {
+        document.getElementById("tab-" + name).classList.toggle("hidden", name !== t.getAttribute("data-tab"));
+      });
+    });
+  });
+
+  function loadAll() {
+    loadApplications();
+    loadRegistrations();
+    loadStudents();
+    loadAnnouncements();
+    loadCourses();
+  }
+
+  // ---------- applications ----------
+  document.getElementById("app-chips").addEventListener("click", function (e) {
+    var chip = e.target.closest(".chip");
+    if (!chip) return;
+    appFilter = chip.getAttribute("data-filter");
+    document.querySelectorAll("#app-chips .chip").forEach(function (c) { c.classList.toggle("active", c === chip); });
+    renderApplications();
+  });
+
+  function loadApplications() {
+    api("/api/applications").then(function (r) {
+      if (r.status !== 200) { showError("apps-error", "Applications could not be loaded."); return; }
+      applications = Array.isArray(r.body) ? r.body : [];
+      renderApplications();
+    }).catch(function () { showError("apps-error", "Applications could not be loaded — server unreachable."); });
+  }
+
+  function statusBadge(s) {
+    return '<span class="badge b-' + esc(s) + '">' + esc(s.charAt(0).toUpperCase() + s.slice(1)) + "</span>";
+  }
+
+  function renderApplications() {
+    var list = applications.filter(function (a) { return appFilter === "all" || a.status === appFilter; });
+    var el = document.getElementById("apps-list");
+    if (!list.length) {
+      el.innerHTML = '<p class="empty">No ' + (appFilter === "all" ? "" : appFilter + " ") + "applications.</p>";
+      return;
+    }
+    el.innerHTML = '<table><thead><tr><th>Date</th><th>Student</th><th>Program</th><th>1st Choice</th><th>Mobile</th><th>Status</th><th></th></tr></thead><tbody>' +
+      list.map(function (a) {
+        var prefs = (a.choices && a.choices.prefs) || [];
+        return '<tr class="row-click" data-open-app="' + esc(a.id) + '">' +
+          "<td>" + esc(fmtDate(a.createdAt)) + "</td>" +
+          "<td><strong>" + esc(a.personal && a.personal.name) + "</strong></td>" +
+          "<td>" + esc(a.choices && a.choices.program) + "</td>" +
+          "<td>" + esc(prefs[0] ? prefs[0].program + (prefs[0].shift ? " (" + prefs[0].shift + ")" : "") : "—") + "</td>" +
+          "<td>" + esc(a.personal && a.personal.contact) + "</td>" +
+          "<td>" + statusBadge(a.status) + "</td>" +
+          '<td><button type="button" class="btn btn-ghost btn-small" data-open-app="' + esc(a.id) + '">View</button></td></tr>';
+      }).join("") + "</tbody></table>";
+  }
+
+  document.getElementById("apps-list").addEventListener("click", function (e) {
+    var t = e.target.closest("[data-open-app]");
+    if (t) openApplication(t.getAttribute("data-open-app"));
+  });
+
+  function detailRow(label, value) {
+    return '<div class="d"><span>' + esc(label) + "</span><strong>" + esc(value || "—") + "</strong></div>";
+  }
+
+  function openApplication(id) {
+    var a = applications.filter(function (x) { return x.id === id; })[0];
+    if (!a) return;
+    openAppId = id;
+    var box = document.getElementById("app-detail");
+    var p = a.personal || {}, g = a.guardian || {}, em = a.emergency || {}, m = a.matric || {}, c = a.choices || {};
+    var prefs = c.prefs || [];
+    function docImg(file, label) {
+      if (!file) return "";
+      var url = API_BASE + "/uploads/" + encodeURIComponent(file);
+      return '<figure><a href="' + esc(url) + '" target="_blank" rel="noopener"><img src="' + esc(url) + '" alt="' + esc(label) + '" /></a><figcaption>' + esc(label) + "</figcaption></figure>";
+    }
+    var decision = "";
+    if (a.status === "pending") {
+      var prefOptions = prefs.map(function (pr, i) {
+        return '<option value="' + esc(pr.program) + '"' + (i === 0 ? " selected" : "") + ">" + esc((i + 1) + ". " + pr.program) + "</option>";
+      }).join("");
+      decision =
+        '<h2 style="margin-top:18px;">Management Decision</h2>' +
+        '<div class="note" id="decision-result"></div>' +
+        '<div class="grid2">' +
+        '<div class="field"><label for="dec-program">Program (confirmed choice)</label><select id="dec-program">' + prefOptions + "</select></div>" +
+        '<div class="field"><label for="dec-class">Class / Shift</label><input id="dec-class" type="text" value="' + esc(prefs[0] ? prefs[0].shift : "") + '" placeholder="e.g. Morning — 1st Year" /></div>' +
+        "</div>" +
+        '<div style="display:flex;gap:12px;flex-wrap:wrap;">' +
+        '<button type="button" class="btn btn-green" id="dec-confirm">Confirm Admission</button>' +
+        '<button type="button" class="btn btn-danger" id="dec-decline">Decline</button>' +
+        "</div>" +
+        '<p class="sub" style="margin-top:12px;">Confirming creates the student\'s unique ID and emails it to the student with their username. Declining emails the student that the request has been declined.</p>';
+    } else {
+      decision = '<h2 style="margin-top:18px;">Decision</h2><p>' + statusBadge(a.status) +
+        (a.studentId ? ' — Student ID: <strong>' + esc(a.studentId) + "</strong>" : "") +
+        (a.decidedAt ? " · " + esc(fmtDate(a.decidedAt)) : "") + "</p>";
+    }
+    box.innerHTML =
+      '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">' +
+      "<h2>Application — " + esc(p.name) + "</h2>" + statusBadge(a.status) + "</div>" +
+      '<p class="sub">Received ' + esc(fmtDate(a.createdAt)) + " · Account Gmail: " + esc(a.accountGmail) + "</p>" +
+      "<h2>Personal Information</h2>" +
+      '<div class="detail-grid">' +
+      detailRow("Student Name", p.name) + detailRow("Father Name", p.fatherName) +
+      detailRow("CNIC / B-Form", p.cnic) + detailRow("Date of Birth", p.dob) +
+      detailRow("Mobile", p.contact) + detailRow("Email", p.email) +
+      detailRow("Gender", p.gender) + detailRow("Domicile", p.domicile) +
+      detailRow("Province", p.province) + detailRow("Postal Code", p.postalCode) +
+      detailRow("City", p.city) + detailRow("Country", p.country) +
+      detailRow("Permanent Address", p.address) +
+      "</div>" +
+      "<h2>Guardian's Information</h2>" +
+      '<div class="detail-grid">' +
+      detailRow("Guardian Name", g.name) + detailRow("Relation", g.relation) +
+      detailRow("Phone", g.phone) + detailRow("Mobile", g.contact) + detailRow("Address", g.address) +
+      "</div>" +
+      "<h2>Emergency Contact</h2>" +
+      '<div class="detail-grid">' +
+      detailRow("Name", em.name) + detailRow("Relation", em.relation) +
+      detailRow("Phone", em.phone) + detailRow("Mobile", em.mobile) + detailRow("Address", em.address) +
+      "</div>" +
+      "<h2>Matric / SSC</h2>" +
+      '<div class="detail-grid">' +
+      detailRow("Board", m.board) + detailRow("Passing Year", m.year) + detailRow("Group", m.group) +
+      detailRow("Marks", (m.obtained || "—") + " / " + (m.total || "—")) +
+      detailRow("10th Result Card", a.tenthStatus === "not-issued" ? "Not issued yet — Roll No: " + (a.tenthRoll || "—") : "Uploaded") +
+      "</div>" +
+      '<div class="docs">' + docImg(a.photoFile, "Passport Photo") + docImg(a.card9File, "9th Class Result Card") + docImg(a.card10File, "10th Class Result Card") + "</div>" +
+      "<h2>Admission &amp; Order of Choice</h2>" +
+      '<div class="detail-grid">' +
+      detailRow("Program", c.program) + detailRow("Ever expelled", c.expelled) + detailRow("Heard about admission", c.heard) +
+      prefs.map(function (pr, i) { return detailRow("Choice " + (i + 1), pr.program + (pr.shift ? " — " + pr.shift + " shift" : "")); }).join("") +
+      "</div>" + decision +
+      '<div style="margin-top:16px;"><button type="button" class="btn btn-ghost btn-small" id="app-close">Close</button></div>';
+    box.classList.remove("hidden");
+    box.scrollIntoView({ behavior: "smooth" });
+
+    document.getElementById("app-close").addEventListener("click", function () {
+      box.classList.add("hidden");
+      openAppId = null;
+    });
+    var confirmBtn = document.getElementById("dec-confirm");
+    if (confirmBtn) confirmBtn.addEventListener("click", function () { decide(id, "confirm"); });
+    var declineBtn = document.getElementById("dec-decline");
+    if (declineBtn) declineBtn.addEventListener("click", function () { decide(id, "decline"); });
+  }
+
+  function decide(id, action) {
+    var result = document.getElementById("decision-result");
+    var confirmBtn = document.getElementById("dec-confirm");
+    var declineBtn = document.getElementById("dec-decline");
+    if (confirmBtn) confirmBtn.disabled = true;
+    if (declineBtn) declineBtn.disabled = true;
+    var body = {};
+    if (action === "confirm") {
+      body.program = document.getElementById("dec-program").value;
+      body.classShift = document.getElementById("dec-class").value.trim();
+    }
+    api("/api/applications/" + encodeURIComponent(id) + "/" + action, {
+      method: "POST",
+      body: JSON.stringify(body)
+    }).then(function (r) {
+      if (r.status !== 200) {
+        result.className = "note show warn";
+        result.textContent = (r.body && r.body.error) || "The decision could not be saved. Please try again.";
+        if (confirmBtn) confirmBtn.disabled = false;
+        if (declineBtn) declineBtn.disabled = false;
+        return;
+      }
+      result.className = "note show ok";
+      if (action === "confirm") {
+        var s = r.body.student || {};
+        result.innerHTML = "Admission confirmed. Student ID: <strong>" + esc(s.studentId) + "</strong> · Username: <strong>" + esc(s.username) + "</strong><br/>" +
+          (r.body.emailSent
+            ? "The confirmation email was sent to " + esc(r.body.emailTo) + "."
+            : "WARNING: no email was sent (" + esc(r.body.emailError || "email not configured") + "). Please give the student their ID yourself.");
+      } else {
+        result.innerHTML = "Application declined.<br/>" +
+          (r.body.emailSent
+            ? "The decline email was sent to " + esc(r.body.emailTo) + "."
+            : "WARNING: no email was sent (" + esc(r.body.emailError || "email not configured") + "). Please inform the student yourself.");
+      }
+      loadApplications();
+      loadStudents();
+      setTimeout(function () {
+        var fresh = applications.filter(function (x) { return x.id === id; })[0];
+        if (fresh) openApplication(id);
+      }, 350);
+    }).catch(function () {
+      result.className = "note show warn";
+      result.textContent = "The server could not be reached. Please try again.";
+      if (confirmBtn) confirmBtn.disabled = false;
+      if (declineBtn) declineBtn.disabled = false;
+    });
+  }
+
+  // ---------- registrations ----------
+  function loadRegistrations() {
+    api("/api/registrations").then(function (r) {
+      var el = document.getElementById("regs-list");
+      if (r.status !== 200 || !Array.isArray(r.body)) { el.innerHTML = '<p class="empty">Registrations could not be loaded.</p>'; return; }
+      if (!r.body.length) { el.innerHTML = '<p class="empty">No student registrations yet.</p>'; return; }
+      el.innerHTML = "<table><thead><tr><th>Name</th><th>Gmail</th><th>Mobile</th><th>Registered</th></tr></thead><tbody>" +
+        r.body.map(function (x) {
+          return "<tr><td><strong>" + esc(x.name) + "</strong></td><td>" + esc(x.gmail) + "</td><td>" + esc(x.mobile) + "</td><td>" + esc(fmtDate(x.createdAt)) + "</td></tr>";
+        }).join("") + "</tbody></table>";
+    });
+  }
+
+  // ---------- confirmed students ----------
+  function loadStudents() {
+    api("/api/students").then(function (r) {
+      var el = document.getElementById("students-list");
+      if (r.status !== 200 || !Array.isArray(r.body)) { el.innerHTML = '<p class="empty">Students could not be loaded.</p>'; return; }
+      if (!r.body.length) { el.innerHTML = '<p class="empty">No confirmed students yet. Confirm an application to create the first student ID.</p>'; return; }
+      el.innerHTML = r.body.map(function (s) {
+        return '<div class="list-row"><div class="who"><strong>' + esc(s.name) + "</strong><span>ID: " + esc(s.studentId) + " · " + esc(s.username) + (s.program ? " · " + esc(s.program) : "") + (s.classShift ? " · " + esc(s.classShift) : "") + '</span></div>' +
+          '<button type="button" class="btn btn-danger btn-small" data-del-student="' + esc(s.studentId) + '">Remove</button></div>';
+      }).join("");
+    });
+  }
+  document.getElementById("students-list").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-del-student]");
+    if (!b) return;
+    var id = b.getAttribute("data-del-student");
+    api("/api/students/" + encodeURIComponent(id), { method: "DELETE", body: JSON.stringify({}) }).then(loadStudents);
+  });
+
+  // ---------- announcements ----------
+  function loadAnnouncements() {
+    fetch(API_BASE + "/api/announcements").then(function (r) { return r.json(); }).then(function (list) {
+      var el = document.getElementById("ann-list");
+      if (!Array.isArray(list) || !list.length) { el.innerHTML = '<p class="empty">No announcements yet.</p>'; return; }
+      el.innerHTML = list.map(function (a) {
+        return '<div class="list-row"><div class="who"><strong>' + esc(a.title) + "</strong><span>" +
+          (a.audience === "students" ? "Students only" : "Everyone") + " · " + esc(a.date || "") + " — " + esc(a.message) + '</span></div>' +
+          '<button type="button" class="btn btn-danger btn-small" data-del-ann="' + esc(a.id) + '">Remove</button></div>';
+      }).join("");
+    }).catch(function () {});
+  }
+  document.getElementById("ann-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    showError("ann-error", "");
+    var ok = document.getElementById("ann-ok");
+    ok.className = "note";
+    var title = document.getElementById("ann-title").value.trim();
+    var message = document.getElementById("ann-text").value.trim();
+    if (!title || !message) { showError("ann-error", "Please write both a title and the announcement."); return; }
+    api("/api/announcements", {
+      method: "POST",
+      body: JSON.stringify({ title: title, message: message, audience: document.getElementById("ann-aud").value })
+    }).then(function (r) {
+      if (r.status === 201) {
+        ok.className = "note show ok";
+        ok.textContent = "Announcement posted — it is now on the front portal.";
+        document.getElementById("ann-form").reset();
+        loadAnnouncements();
+      } else {
+        showError("ann-error", (r.body && r.body.error) || "The announcement could not be posted.");
+      }
+    });
+  });
+  document.getElementById("ann-list").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-del-ann]");
+    if (!b) return;
+    api("/api/announcements/" + encodeURIComponent(b.getAttribute("data-del-ann")), { method: "DELETE", body: JSON.stringify({}) }).then(loadAnnouncements);
+  });
+
+  // ---------- courses ----------
+  function loadCourses() {
+    fetch(API_BASE + "/api/courses").then(function (r) { return r.json(); }).then(function (list) {
+      var el = document.getElementById("course-list");
+      if (!Array.isArray(list) || !list.length) { el.innerHTML = '<p class="empty">No courses yet.</p>'; return; }
+      el.innerHTML = list.map(function (c) {
+        return '<div class="list-row"><div class="who"><strong>' + esc(c.name) + "</strong><span>" + esc((c.subjects || []).join(", ")) + '</span></div>' +
+          '<button type="button" class="btn btn-danger btn-small" data-del-course="' + esc(c.name) + '">Remove</button></div>';
+      }).join("");
+    }).catch(function () {});
+  }
+  document.getElementById("course-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    showError("course-error", "");
+    var ok = document.getElementById("course-ok");
+    ok.className = "note";
+    var name = document.getElementById("course-name").value.trim();
+    if (!name) { showError("course-error", "Please add the course name."); return; }
+    var subjects = document.getElementById("course-subjects").value.split(",").map(function (s) { return s.trim(); }).filter(Boolean);
+    api("/api/courses", {
+      method: "POST",
+      body: JSON.stringify({
+        name: name,
+        code: document.getElementById("course-code").value.trim() || name,
+        desc: document.getElementById("course-desc").value.trim(),
+        subjects: subjects
+      })
+    }).then(function (r) {
+      if (r.status === 201) {
+        ok.className = "note show ok";
+        ok.textContent = "Course saved — it now appears on the front portal and in the application form.";
+        document.getElementById("course-form").reset();
+        loadCourses();
+      } else {
+        showError("course-error", (r.body && r.body.error) || "The course could not be saved.");
+      }
+    });
+  });
+  document.getElementById("course-list").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-del-course]");
+    if (!b) return;
+    api("/api/courses/" + encodeURIComponent(b.getAttribute("data-del-course")), { method: "DELETE", body: JSON.stringify({}) }).then(loadCourses);
+  });
+})();
+</script>
+</body>
+</html>
