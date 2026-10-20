@@ -1,0 +1,17 @@
+# Faheem College of Science, Sanawan — backend service on Render
+# Render reads this file and runs the backend in backend/ as a free web service.
+# Deploy: open https://render.com/deploy?repo=https://github.com/zm775487-source/faheem-college-of-sciences
+# (sign in with GitHub, enter the ADMIN_CODE when asked, then Apply / Create).
+services:
+  - type: web
+    name: faheem-college-backend
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /api/health
+    autoDeployTrigger: off
+    envVars:
+      - key: ADMIN_CODE
+        sync: false
