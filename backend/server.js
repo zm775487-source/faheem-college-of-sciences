@@ -175,7 +175,7 @@ function confirmEmail(app, student) {
       "Your Student Portal access:\n" +
       "  Username: " + student.username + "\n" +
       "  Unique Student ID: " + student.studentId + "\n\n" +
-      "Open the college website, go to the Student Portal section, and enter this username and ID to see your details and announcements. Please keep your ID safe and do not share it with anyone.\n\n" +
+      "Open the Student Portal here: https://zm775487-source.github.io/faheem-college-of-sciences/portal.html and enter this username and ID to see your details and announcements. Please keep your ID safe and do not share it with anyone.\n\n" +
       "For any question, contact the college office:\n" +
       "WhatsApp / Call: 0346 7114714\nOffice: 0346 1949054\n\n" +
       "Faheem College of Science, Sanawan (near Kot Addu), Punjab",
