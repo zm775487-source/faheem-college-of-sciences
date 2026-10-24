@@ -47,7 +47,7 @@ footer{background:#1b3a6b;color:#fff;text-align:center;padding:18px;margin-top:2
 <div id="loginBox" class="hidden">
 <label>Gmail</label><input id="liGmail" type="email" placeholder="example@gmail.com">
 <label>Password</label><input id="liPass" type="password">
-<button type="button" class="btn btn-blue" onclick="doLogin()">Log In</button>
+<button type="button" class="btn btn-blue" onclick="doLogin()">Log In</button><p style="margin-top:8px"><a href="#" onclick="doForgot(); return false;" style="color:#1b3a6b">Forgot password?</a></p>
 </div>
 <div id="authMsg"></div>
 <div id="signedBox" class="hidden"><p><strong>Signed in as:</strong> <span id="signedInfo"></span></p><button type="button" class="btn btn-grey" onclick="doLogout()">Log Out</button></div>
@@ -140,6 +140,12 @@ function doLogin(){
   var gmail=document.getElementById("liGmail").value.trim(); var pass=document.getElementById("liPass").value;
   if(!auth){ setMsg('<div class="error">Login is not available yet. Please contact the college office.</div>'); return; }
   auth.signInWithEmailAndPassword(gmail,pass).then(function(){ setMsg('<div class="success">Logged in successfully.</div>'); }).catch(function(e){ setMsg('<div class="error">'+e.message+'</div>'); });
+}
+function doForgot(){
+  var gmail=document.getElementById("liGmail").value.trim();
+  if(!auth){ setMsg('<div class="error">Login is not available yet. Please contact the college office.</div>'); return; }
+  if(!gmail){ setMsg('<div class="error">Please enter your Gmail above first, then tap Forgot password.</div>'); return; }
+  auth.sendPasswordResetEmail(gmail).then(function(){ setMsg('<div class="success">Password reset email sent to '+gmail+'. Please check the inbox and set a new password, then log in.</div>'); }).catch(function(e){ setMsg('<div class="error">'+e.message+'</div>'); });
 }
 function doLogout(){ if(auth){ auth.signOut(); } }
 try{
