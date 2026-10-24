@@ -79,7 +79,7 @@ var db = null; var auth = null;
 try { firebase.initializeApp(firebaseConfig); auth = firebase.auth(); db = firebase.firestore(); } catch (e) { db = null; auth = null; }
 
 var ADMIN_EMAIL = "zm775487@gmail.com";
-var EMAILJS_CFG = { publicKey: "PASTE_EMAILJS_PUBLIC_KEY", serviceId: "PASTE_EMAILJS_SERVICE_ID", templateId: "PASTE_EMAILJS_TEMPLATE_ID" };
+var EMAILJS_CFG = { publicKey: "SKi3-YIsHffm0auI6", serviceId: "service_t1138y3", templateId: "template_ehfqyr9" };
 function emailJsConfigured(){ return !!(EMAILJS_CFG.publicKey && EMAILJS_CFG.serviceId && EMAILJS_CFG.templateId && EMAILJS_CFG.publicKey.indexOf("PASTE_")!==0 && EMAILJS_CFG.serviceId.indexOf("PASTE_")!==0 && EMAILJS_CFG.templateId.indexOf("PASTE_")!==0); }
 try{ if(emailJsConfigured() && typeof emailjs!=="undefined"){ emailjs.init(EMAILJS_CFG.publicKey); } }catch(e){}
 if(emailJsConfigured()){ var w=document.getElementById("emailWarning"); if(w) w.classList.add("hidden"); }
