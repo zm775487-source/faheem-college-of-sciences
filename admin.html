@@ -33,7 +33,7 @@ footer{background:#1b3a6b;color:#fff;text-align:center;padding:18px;margin-top:2
 
 <div class="container">
 <div class="card" id="adminLoginCard"><h2>Management Login</h2><p>Only the college management account can open this dashboard.</p>
-<form id="adminLoginForm"><label>Management Email</label><input id="adminEmail" type="email" required><label>Password</label><input id="adminPass" type="password" required><button type="submit" class="btn">Log In</button><div id="adminLoginMsg"></div></form></div>
+<form id="adminLoginForm"><label>Management Email</label><input id="adminEmail" type="email" required><label>Password</label><input id="adminPass" type="password" required><button type="submit" class="btn">Log In</button><p style="margin-top:8px"><a href="#" id="adminForgot" style="color:#1b3a6b">Forgot password?</a></p><div id="adminLoginMsg"></div></form></div>
 
 <div id="dashboard" class="hidden">
 <div class="card"><h2>Website Pages</h2><p>Share the right link with students:</p>
@@ -91,6 +91,7 @@ function sendDecisionEmail(toEmail, subject, message){
 var allApps=[]; var currentFilter="pending"; var currentApp=null; var currentAppId=null;
 function adminLogout(){ if(auth) auth.signOut(); }
 document.getElementById("adminLoginForm").addEventListener("submit", function(ev){ ev.preventDefault(); var em=document.getElementById("adminEmail").value.trim(); var pw=document.getElementById("adminPass").value; var msg=document.getElementById("adminLoginMsg"); if(!auth){ msg.innerHTML='<div class="error">Login is not available yet.</div>'; return; } auth.signInWithEmailAndPassword(em,pw).catch(function(e){ msg.innerHTML='<div class="error">'+e.message+'</div>'; }); });
+document.getElementById("adminForgot").addEventListener("click", function(ev){ ev.preventDefault(); var em=document.getElementById("adminEmail").value.trim(); var msg=document.getElementById("adminLoginMsg"); if(!em){ msg.innerHTML='<div class="error">Please enter your management email above first, then tap Forgot password.</div>'; return; } if(!auth){ msg.innerHTML='<div class="error">Login is not available yet.</div>'; return; } auth.sendPasswordResetEmail(em).then(function(){ msg.innerHTML='<div class="success">Password reset email sent to '+em+'. Please check the inbox and set a new password, then log in here.</div>'; }).catch(function(e){ msg.innerHTML='<div class="error">'+e.message+'</div>'; }); });
 try{
   if(auth){ auth.onAuthStateChanged(function(user){
     var loginCard=document.getElementById("adminLoginCard"); var dash=document.getElementById("dashboard"); var msg=document.getElementById("adminLoginMsg");
