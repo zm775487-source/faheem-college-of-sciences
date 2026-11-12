@@ -1,52 +1,337 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>LUMORA – The Living Puzzle World (Web Prototype)</title><style>
-:root{--bg:#0e0b1e;--card:#1b1533;--text:#f4f1ff;--accent:#a78bfa;--gold:#fbbf24}
-body.light{--bg:#f5f2ff;--card:#ffffff;--text:#231b3a;--accent:#7c3aed}
-*{box-sizing:border-box} body{margin:0;font-family:system-ui,Segoe UI,Arial;background:var(--bg);color:var(--text);display:flex;justify-content:center}
-#app{width:100%;max-width:430px;min-height:100vh;padding:14px}
-header{text-align:center} h1{letter-spacing:4px;margin:6px 0 2px;background:linear-gradient(90deg,#a78bfa,#f472b6,#fbbf24);-webkit-background-clip:text;background-clip:text;color:transparent}
-.sub{opacity:.75;font-size:13px} .world{font-weight:700;margin-top:8px}
-#board{display:grid;gap:6px;margin:16px auto;width:min(92vw,380px)}
-.cell{aspect-ratio:1;border-radius:14px;background:var(--card);position:relative;cursor:pointer;border:1px solid rgba(255,255,255,.12);touch-action:manipulation}
-.cell.blocker{background:repeating-linear-gradient(45deg,#0003,#0003 6px,transparent 6px,transparent 12px);cursor:default}
-.cell.empty{opacity:.35;cursor:default}
-.arm{position:absolute;background:#6b6390;border-radius:6px}
-.cell.on .arm{background:var(--gold);box-shadow:0 0 10px var(--gold)}
-.arm.n{left:44%;top:0;width:12%;height:52%}.arm.s{left:44%;bottom:0;width:12%;height:52%}.arm.e{top:44%;right:0;height:12%;width:52%}.arm.w{top:44%;left:0;height:12%;width:52%}
-.core{position:absolute;left:36%;top:36%;width:28%;height:28%;border-radius:50%;background:#8b84ad}
-.cell.on .core{background:var(--gold);box-shadow:0 0 14px var(--gold)}
-.cell.source .core{background:#38bdf8}.cell.portal .core{background:#f472b6;border-radius:30%}
-.cell.hinted{outline:3px solid #34d399}
-button{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:10px 12px;margin:4px;cursor:pointer;font-weight:600}
-button.ghost{background:transparent;border:1px solid var(--accent);color:var(--text)}
-.row{display:flex;flex-wrap:wrap;justify-content:center;align-items:center}
-.panel{background:var(--card);border-radius:14px;padding:14px;margin:12px 0}
-.hidden{display:none} #confetti{font-size:26px;text-align:center;min-height:34px}
-select,input{background:var(--card);color:var(--text);border:1px solid var(--accent);border-radius:8px;padding:8px}
-.stars{font-size:24px;color:var(--gold);text-align:center}
+/* LUMORA V2 — multi-screen app UI, animated gradient buttons, glossy 3D-style graphics.
+   All art is original CSS/SVG (no external images). Colours set per world via --world1/--world2. */
+:root{
+  --bg:#0e0b1e; --card:#1b1533; --text:#f4f1ff; --muted:rgba(226,218,255,.72);
+  --accent:#a78bfa; --gold:#fbbf24; --pink:#ec4899;
+  --world1:#38bdf8; --world2:#0ea5e9;
+  --row:rgba(64,42,130,.35); --row-border:rgba(190,160,255,.18);
+}
+body.light{
+  --bg:#efeafd; --card:#ffffff; --text:#2a1e4f; --muted:rgba(42,30,79,.66);
+  --row:rgba(255,255,255,.55); --row-border:rgba(124,58,237,.25);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:system-ui,"Segoe UI",Arial,sans-serif;background:#070412;color:var(--text);display:flex;justify-content:center}
+#app{width:100%;max-width:430px;margin:0 auto;position:relative;min-height:100dvh}
+
+/* ---------- animated magical background ---------- */
+.bg-scene{position:fixed;top:0;left:50%;transform:translateX(-50%);width:min(100%,430px);height:100dvh;z-index:0;overflow:hidden;pointer-events:none;
+  background:linear-gradient(180deg,#2c1656 0%,#1d0f3d 46%,#120826 100%)}
+body.light .bg-scene{background:linear-gradient(180deg,#a5b4fc 0%,#c4b5fd 55%,#e9d5ff 100%)}
+.bg-glow{position:absolute;border-radius:50%;filter:blur(46px);opacity:.55;animation:glowPulse 7s ease-in-out infinite}
+.bg-glow.g1{width:230px;height:230px;left:-70px;top:6%;background:#7c3aed}
+.bg-glow.g2{width:200px;height:200px;right:-60px;top:30%;background:#db2777;animation-delay:-3s}
+@keyframes glowPulse{0%,100%{transform:scale(1);opacity:.45}50%{transform:scale(1.18);opacity:.65}}
+.bg-castle{position:absolute;left:0;bottom:-4px;width:100%;height:235px}
+.particles span{position:absolute;bottom:-24px;left:var(--x);width:var(--s);height:var(--s);border-radius:50%;
+  background:radial-gradient(circle at 35% 35%,#fff 0%,var(--c) 55%,transparent 78%);
+  box-shadow:0 0 12px 2px var(--c);opacity:0;animation:floatUp var(--t) linear infinite;animation-delay:var(--d)}
+@keyframes floatUp{0%{transform:translateY(0) translateX(0);opacity:0}12%{opacity:.85}82%{opacity:.6}100%{transform:translateY(-104dvh) translateX(20px);opacity:0}}
+
+/* ---------- screens ---------- */
+.screen{display:none;position:relative;z-index:1;min-height:100dvh;padding:16px 16px 40px;animation:screenIn .28s ease}
+.screen.active{display:block}
+@keyframes screenIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.screen-head{display:flex;align-items:center;gap:10px;padding:6px 0 4px}
+.screen-title{flex:1;text-align:center;margin:0;font-size:22px;letter-spacing:4px;font-weight:900}
+.head-spacer{width:44px}
+.sub{opacity:.78;font-size:13px;color:var(--muted)}
+.center{text-align:center}
+.hidden{display:none !important}
+
+/* ---------- buttons: gloss, shadow, animated gradients ---------- */
+.btn{display:block;width:100%;padding:16px 18px;margin:7px 0;border:0;border-radius:999px;cursor:pointer;
+  font-size:18px;font-weight:800;letter-spacing:2.5px;color:#fff;text-align:center;position:relative;
+  box-shadow:0 10px 24px rgba(0,0,0,.45),inset 0 2px 3px rgba(255,255,255,.55),inset 0 -7px 13px rgba(0,0,0,.28);
+  transition:transform .08s ease,filter .15s ease;-webkit-tap-highlight-color:transparent}
+.btn::after{content:"";position:absolute;left:6%;right:6%;top:3px;height:42%;border-radius:999px;
+  background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,.05));pointer-events:none}
+.btn:active{transform:scale(.965);filter:brightness(1.1)}
+.btn-play{background:linear-gradient(100deg,#ff2e88,#d6249f,#7c3aed,#ff5e3a,#ff2e88);background-size:230% 100%;
+  animation:gradShift 3.6s ease-in-out infinite;font-size:21px;text-shadow:0 2px 6px rgba(90,0,50,.45)}
+.btn-world{background:linear-gradient(100deg,var(--world1),var(--world2),var(--world1));background-size:230% 100%;
+  animation:gradShift 3.6s ease-in-out infinite;text-shadow:0 2px 6px rgba(0,0,0,.35)}
+@keyframes gradShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.btn-glass{background:linear-gradient(180deg,rgba(112,80,205,.5),rgba(64,38,138,.55));border:1.5px solid rgba(198,168,255,.5);color:#fff}
+body.light .btn-glass{color:#3b1470;background:linear-gradient(180deg,rgba(255,255,255,.75),rgba(216,196,255,.6))}
+.btn-ico{margin-right:8px;opacity:.95}
+.icon-btn{width:44px;height:44px;flex:0 0 44px;border-radius:50%;border:1.5px solid rgba(198,168,255,.45);cursor:pointer;
+  background:linear-gradient(180deg,rgba(112,80,205,.45),rgba(52,30,110,.55));color:#fff;font-size:19px;line-height:1;
+  display:grid;place-items:center;position:relative;
+  box-shadow:0 5px 12px rgba(0,0,0,.4),inset 0 2px 2px rgba(255,255,255,.4);transition:transform .08s ease}
+.icon-btn:active{transform:scale(.93)}
+body.light .icon-btn{color:#3b1470;background:linear-gradient(180deg,rgba(255,255,255,.8),rgba(216,196,255,.65))}
+.badge{position:absolute;top:-5px;right:-5px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;
+  background:linear-gradient(180deg,#ff5da2,#e0115f);color:#fff;font-size:12px;font-weight:800;display:grid;place-items:center;
+  box-shadow:0 3px 7px rgba(0,0,0,.45),inset 0 1px 1px rgba(255,255,255,.6)}
+
+/* ---------- HOME ---------- */
+.home-inner{display:flex;flex-direction:column;align-items:center;min-height:calc(100dvh - 56px);padding-top:6dvh}
+.game-icon{width:104px;height:104px;border-radius:28px;position:relative;display:grid;place-items:center;
+  background:linear-gradient(150deg,#4c1d95,#7c3aed 45%,#db2777);
+  box-shadow:0 18px 34px rgba(0,0,0,.55),inset 0 3px 5px rgba(255,255,255,.55),inset 0 -10px 18px rgba(0,0,0,.4);
+  animation:iconFloat 3.4s ease-in-out infinite}
+.game-icon svg{width:84px;height:84px;filter:drop-shadow(0 0 10px rgba(56,189,248,.8))}
+@keyframes iconFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.icon-spark{position:absolute;color:#ffd34d;font-size:17px;text-shadow:0 0 9px #ffd34d;animation:sparkPulse 1.8s ease-in-out infinite}
+.icon-spark.s1{top:-9px;right:-6px}.icon-spark.s2{bottom:-7px;left:-8px;color:#f472b6;text-shadow:0 0 9px #f472b6;animation-delay:-.9s}
+@keyframes sparkPulse{0%,100%{transform:scale(.8);opacity:.65}50%{transform:scale(1.2);opacity:1}}
+.game-title{margin:20px 0 2px;font-family:Georgia,"Times New Roman",serif;font-size:57px;font-weight:900;letter-spacing:7px;line-height:1;
+  background:linear-gradient(180deg,#fff6c9 0%,#ffd34d 34%,#c07f10 62%,#ffdf6b 82%,#fff0a8 100%);background-size:100% 220%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 3px 0 rgba(84,46,0,.55)) drop-shadow(0 8px 16px rgba(0,0,0,.55));
+  animation:titleShine 5s ease-in-out infinite}
+@keyframes titleShine{0%,100%{background-position:50% 0%}50%{background-position:50% 55%}}
+.game-subtitle{letter-spacing:5px;font-size:12.5px;font-weight:700;color:#e9d8ff;text-shadow:0 2px 8px rgba(0,0,0,.6)}
+body.light .game-subtitle{color:#4c1d95}
+.home-stats{margin:18px 0 8px;font-weight:800;font-size:15px;color:#ffe9a8;text-shadow:0 2px 7px rgba(0,0,0,.55);display:flex;gap:9px;align-items:center}
+body.light .home-stats{color:#7c2d12}
+.home-stats .dot{opacity:.6}
+.home-buttons{width:100%;max-width:322px;margin-top:10px}
+.home-about{margin-top:auto;text-align:center;font-size:12px;line-height:1.55;color:var(--muted);text-shadow:0 1px 5px rgba(0,0,0,.5)}
+
+/* ---------- LEVELS ---------- */
+.world-head{display:flex;align-items:center;gap:10px;margin:22px 2px 11px;font-weight:900;letter-spacing:1.5px;font-size:16px;text-shadow:0 2px 6px rgba(0,0,0,.5)}
+.world-dot{width:14px;height:14px;border-radius:50%;background:var(--wc);box-shadow:0 0 11px 2px var(--wc),inset 0 2px 3px rgba(255,255,255,.7)}
+.world-count{margin-left:auto;font-size:12px;font-weight:700;opacity:.75;letter-spacing:.5px}
+.lvl-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.lvl-tile{position:relative;aspect-ratio:1;border-radius:17px;border:1.5px solid rgba(198,168,255,.35);cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;color:#fff;
+  background:linear-gradient(150deg,rgba(122,90,220,.55),rgba(58,36,122,.6));
+  box-shadow:0 6px 13px rgba(0,0,0,.42),inset 0 2px 3px rgba(255,255,255,.4),inset 0 -6px 10px rgba(0,0,0,.35);
+  transition:transform .08s ease;font-family:inherit}
+.lvl-tile:active{transform:scale(.94)}
+.lvl-tile .num{font-size:19px;font-weight:900;text-shadow:0 2px 4px rgba(0,0,0,.4)}
+.lvl-tile .lstars{font-size:10px;line-height:1.1;color:#ffd34d;text-shadow:0 0 6px rgba(255,211,77,.7);min-height:12px}
+.lvl-tile.completed{background:linear-gradient(150deg,#ff5da2,#d6249f 60%,#a21caf);border-color:rgba(255,190,225,.65)}
+.lvl-tile.current{border-color:#ff5da2;box-shadow:0 0 0 2px rgba(255,46,136,.55),0 0 18px 3px rgba(255,46,136,.45),inset 0 2px 3px rgba(255,255,255,.4)}
+.lvl-tile.locked{opacity:.42;filter:saturate(.35);cursor:default}
+.lvl-tile .lock{position:absolute;top:4px;right:6px;font-size:11px}
+
+/* ---------- SETTINGS ---------- */
+.set-section{margin:22px 4px 4px;font-size:12.5px;font-weight:900;letter-spacing:2.5px;color:#f0abfc;text-shadow:0 1px 5px rgba(0,0,0,.5)}
+body.light .set-section{color:#a21caf}
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;
+  background:var(--row);border:1px solid var(--row-border);border-radius:17px;padding:16px 17px;margin:9px 0;
+  box-shadow:0 6px 14px rgba(0,0,0,.28),inset 0 2px 2px rgba(255,255,255,.22);color:var(--text);font-size:15.5px;text-align:left}
+.set-btn{cursor:pointer;font-family:inherit;transition:transform .08s ease}
+.set-btn:active{transform:scale(.98)}
+.set-label{font-weight:650}
+.chev{font-size:22px;opacity:.65}
+.about-row{font-size:13.5px;line-height:1.55;color:var(--muted);display:block}
+.switch{flex:0 0 auto;cursor:pointer}
+.switch input{display:none}
+.switch .track{display:block;width:54px;height:30px;border-radius:999px;background:#453a6e;position:relative;
+  transition:background .25s ease;box-shadow:inset 0 2px 5px rgba(0,0,0,.5),inset 0 -1px 2px rgba(255,255,255,.15)}
+.switch .knob{position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;
+  background:linear-gradient(180deg,#ffffff,#d9d2f5);box-shadow:0 3px 6px rgba(0,0,0,.45),inset 0 -2px 3px rgba(90,70,160,.35);transition:transform .25s ease}
+.switch input:checked + .track{background:linear-gradient(90deg,#ff2e88,#d6249f);box-shadow:inset 0 2px 5px rgba(90,0,50,.45),0 0 12px rgba(236,72,153,.5)}
+.switch input:checked + .track .knob{transform:translateX(24px)}
+select{background:rgba(30,18,66,.85);color:#fff;border:1.5px solid rgba(198,168,255,.45);border-radius:11px;padding:9px 12px;font-size:15px;font-weight:650}
+body.light select{background:#fff;color:#2a1e4f}
+
+/* ---------- GAMEPLAY ---------- */
+.game-topbar{position:sticky;top:0;z-index:6;display:flex;align-items:center;gap:8px;padding:10px 2px 12px;
+  background:linear-gradient(180deg,rgba(16,9,36,.94),rgba(16,9,36,.55) 80%,transparent);border-radius:0 0 18px 18px}
+body.light .game-topbar{background:linear-gradient(180deg,rgba(240,233,255,.95),rgba(240,233,255,.55) 80%,transparent)}
+.timer{font-variant-numeric:tabular-nums;font-weight:800;font-size:15px;min-width:76px;text-align:center;text-shadow:0 2px 5px rgba(0,0,0,.5)}
+.game-level-title{flex:1;text-align:center;font-weight:900;letter-spacing:2.5px;font-size:18px;text-shadow:0 2px 6px rgba(0,0,0,.5)}
+.world-line{text-align:center;font-weight:900;font-size:16.5px;margin-top:8px;letter-spacing:.5px;
+  color:var(--world1);text-shadow:0 0 13px var(--world1),0 2px 5px rgba(0,0,0,.55)}
+.hint-line{min-height:36px;padding:4px 10px;line-height:1.5}
+.board-wrap{position:relative;margin-top:6px}
+#board{display:grid;gap:7px;margin:14px auto;width:min(94vw,388px)}
+#board .cell{aspect-ratio:1;border-radius:17px;position:relative;cursor:pointer;overflow:hidden;
+  background:linear-gradient(145deg,#3d2d68,#251a49 55%,#190f36);
+  border:1px solid rgba(255,255,255,.15);
+  box-shadow:inset 0 2px 3px rgba(255,255,255,.38),inset 0 -9px 15px rgba(0,0,0,.55),0 7px 13px rgba(0,0,0,.48);
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:box-shadow .25s ease,background .25s ease}
+body.light #board .cell{background:linear-gradient(145deg,#cfc2f5,#a78bfa 60%,#8b6fe0)}
+#board .cell.on{background:linear-gradient(145deg,#553d78,#33205c 60%,#241243);
+  box-shadow:inset 0 2px 3px rgba(255,255,255,.4),inset 0 -9px 15px rgba(0,0,0,.5),0 0 19px 3px rgba(251,191,36,.4),0 7px 13px rgba(0,0,0,.48)}
+#board .cell.blocker{background:repeating-linear-gradient(45deg,rgba(0,0,0,.5) 0 7px,rgba(28,18,54,.9) 7px,rgba(28,18,54,.9) 14px);cursor:default}
+#board .cell.empty{opacity:.35;cursor:default}
+#board .cell.hinted{outline:3px solid #34d399;outline-offset:-1px;animation:hintPulse .8s ease-in-out infinite}
+@keyframes hintPulse{0%,100%{box-shadow:0 0 4px 1px rgba(52,211,153,.5)}50%{box-shadow:0 0 18px 5px rgba(52,211,153,.85)}}
+.rotator{position:absolute;inset:0;z-index:1;transition:transform .22s ease}
+.arm{position:absolute;border-radius:7px;background:linear-gradient(180deg,#877db5,#5d518c);
+  box-shadow:inset 0 1px 2px rgba(255,255,255,.45),inset 0 -2px 3px rgba(0,0,0,.4)}
+.cell.on .arm{background:linear-gradient(180deg,#ffe066,#f59e0b);box-shadow:0 0 13px 3px rgba(251,191,36,.8),inset 0 1px 2px rgba(255,255,255,.7)}
+.arm.n{left:44%;top:0;width:12%;height:53%}.arm.s{left:44%;bottom:0;width:12%;height:53%}
+.arm.e{top:44%;right:0;height:12%;width:53%}.arm.w{top:44%;left:0;height:12%;width:53%}
+.core{position:absolute;z-index:2;left:36%;top:36%;width:28%;height:28%;border-radius:50%;
+  background:radial-gradient(circle at 34% 28%,#cfc8ea,#8b84ad 55%,#5d518c);
+  box-shadow:inset 0 2px 3px rgba(255,255,255,.6),inset 0 -4px 7px rgba(0,0,0,.45),0 3px 7px rgba(0,0,0,.4)}
+.cell.on .core{background:radial-gradient(circle at 34% 28%,#fff3c4,#fbbf24 55%,#b45309);
+  box-shadow:0 0 17px 4px rgba(251,191,36,.75),inset 0 2px 3px rgba(255,255,255,.75),inset 0 -4px 7px rgba(146,64,14,.6)}
+.cell.source .core{left:32%;top:32%;width:36%;height:36%;
+  background:radial-gradient(circle at 32% 26%,#e0f2fe,#38bdf8 48%,#075985);
+  box-shadow:0 0 18px 4px rgba(56,189,248,.65),inset 0 2px 4px rgba(255,255,255,.85),inset 0 -5px 9px rgba(3,105,161,.65)}
+.cell.portal .core{left:34%;top:34%;width:32%;height:32%;border-radius:32%;transform:rotate(45deg);
+  background:linear-gradient(135deg,#fda4af,#ec4899 55%,#9d174d);
+  box-shadow:0 0 17px 4px rgba(236,72,153,.6),inset 0 2px 4px rgba(255,255,255,.8),inset 0 -5px 9px rgba(80,7,36,.6)}
+.cell.on.portal .core{box-shadow:0 0 26px 8px rgba(236,72,153,.9),inset 0 2px 4px rgba(255,255,255,.85),inset 0 -5px 9px rgba(80,7,36,.6)}
+.cell.empty .core{background:transparent;box-shadow:none}
+.cell.node .core{background:radial-gradient(circle at 34% 28%,#fef3c7,#f59e0b 60%,#92400e)}
+
+/* ---------- overlays (pause / level complete) ---------- */
+.overlay{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;
+  background:rgba(9,5,22,.74);backdrop-filter:blur(3px);border-radius:10px;animation:screenIn .25s ease}
+.overlay-card{width:88%;max-width:330px;text-align:center;padding:24px 20px 18px;border-radius:24px;
+  background:linear-gradient(160deg,#342462,#1c133f);
+  border:1.5px solid rgba(198,168,255,.35);
+  box-shadow:0 24px 48px rgba(0,0,0,.65),inset 0 2px 3px rgba(255,255,255,.35),inset 0 -10px 20px rgba(0,0,0,.4)}
+.overlay-title{font-size:24px;font-weight:900;letter-spacing:1px;margin:6px 0 4px;color:#fff}
+.overlay-card .btn{margin:8px 0}
+.stars{font-size:43px;letter-spacing:5px;color:var(--gold);line-height:1.15;
+  text-shadow:0 0 18px rgba(251,191,36,.85),0 3px 0 rgba(120,53,15,.6);animation:starPop .5s ease}
+@keyframes starPop{0%{transform:scale(.4);opacity:0}60%{transform:scale(1.18)}100%{transform:scale(1);opacity:1}}
 
 </style></head>
 <body><div id="app">
-<header><h1>LUMORA</h1><div class="sub">The Living Puzzle World</div>
-<div class="world" id="worldName">Loading…</div><div class="sub" id="progress"></div><div class="sub" id="parInfo"></div></header>
-<div id="confetti"></div>
-<div id="board"></div>
-<div id="complete" class="panel hidden"><div class="stars" id="stars"></div><p style="text-align:center">Portal reached — energy restored!</p></div>
-<div class="row">
-<button id="prevBtn" class="ghost">← Prev</button>
-<button id="retryBtn">↻ Retry</button>
-<button id="hintBtn">💡 Hint</button>
-<button id="pauseBtn">⏸ Pause</button>
-<button id="nextBtn" class="ghost">Next →</button>
+
+<div class="bg-scene" aria-hidden="true">
+  <div class="bg-glow g1"></div><div class="bg-glow g2"></div>
+  <div class="particles">
+    <span style="--x:6%;--s:7px;--t:13s;--d:-2s;--c:#fbbf24"></span>
+    <span style="--x:16%;--s:5px;--t:17s;--d:-9s;--c:#a78bfa"></span>
+    <span style="--x:27%;--s:9px;--t:15s;--d:-5s;--c:#f472b6"></span>
+    <span style="--x:39%;--s:5px;--t:12s;--d:-7s;--c:#38bdf8"></span>
+    <span style="--x:50%;--s:7px;--t:18s;--d:-3s;--c:#fbbf24"></span>
+    <span style="--x:61%;--s:5px;--t:14s;--d:-11s;--c:#4ade80"></span>
+    <span style="--x:72%;--s:8px;--t:16s;--d:-6s;--c:#a78bfa"></span>
+    <span style="--x:83%;--s:5px;--t:12s;--d:-1s;--c:#f472b6"></span>
+    <span style="--x:92%;--s:7px;--t:15s;--d:-8s;--c:#38bdf8"></span>
+    <span style="--x:45%;--s:4px;--t:11s;--d:-4s;--c:#ffffff"></span>
+  </div>
+  <svg class="bg-castle" viewBox="0 0 430 210" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <circle cx="356" cy="34" r="26" fill="#f5eeda" opacity="0.14"/>
+    <circle cx="356" cy="34" r="16" fill="#f5eeda" opacity="0.9"/>
+    <polygon points="0,210 0,148 62,92 124,150 178,102 244,156 302,98 372,150 430,116 430,210" fill="#211344" opacity="0.85"/>
+    <g fill="#170d31">
+      <rect x="188" y="72" width="54" height="88"/>
+      <rect x="184" y="64" width="14" height="12"/><rect x="204" y="64" width="14" height="12"/><rect x="224" y="64" width="14" height="12"/>
+      <rect x="158" y="98" width="26" height="62"/><polygon points="154,98 171,72 188,98"/>
+      <rect x="246" y="98" width="26" height="62"/><polygon points="242,98 259,72 276,98"/>
+      <polygon points="184,72 215,38 246,72"/>
+      <path d="M206 160 v-22 a9 12 0 0 1 18 0 v22 z" fill="#0a0518"/>
+    </g>
+    <g fill="#ffd34d">
+      <rect x="210" y="86" width="7" height="10" rx="3"/>
+      <rect x="166" y="112" width="6" height="9" rx="3"/>
+      <rect x="254" y="112" width="6" height="9" rx="3"/>
+      <rect x="196" y="118" width="6" height="9" rx="3"/>
+      <rect x="228" y="118" width="6" height="9" rx="3"/>
+    </g>
+    <g fill="#100826">
+      <rect x="30" y="168" width="5" height="14"/><polygon points="14,170 32,138 50,170"/><polygon points="18,150 32,126 46,150"/>
+      <rect x="86" y="176" width="5" height="12"/><polygon points="72,178 88,150 104,178"/><polygon points="76,160 88,140 100,160"/>
+      <rect x="338" y="172" width="5" height="13"/><polygon points="323,174 340,144 357,174"/><polygon points="327,156 340,134 353,156"/>
+      <rect x="392" y="180" width="5" height="11"/><polygon points="379,182 394,156 409,182"/>
+      <circle cx="120" cy="168" r="15"/><rect x="117" y="168" width="6" height="16"/>
+      <circle cx="312" cy="176" r="12"/><rect x="309" y="176" width="6" height="13"/>
+    </g>
+    <path d="M0 210 L0 182 Q110 158 218 182 T430 174 V210 Z" fill="#150b2c"/>
+    <polygon points="206,210 224,210 218,182 212,182" fill="#2c1c52"/>
+  </svg>
 </div>
-<p class="sub" style="text-align:center">Tap a tile to rotate it. Guide the glow from the blue source to the pink portal. Swipe up/down to change puzzle.</p>
-<div class="panel"><h3>World / Level Select</h3><div class="row"><select id="levelSelect"></select><button id="goBtn">Go</button></div></div>
-<div class="panel"><h3>Settings (Guest Mode — saved on this device only, no login)</h3>
-<label><input type="checkbox" id="soundToggle"> Sound (WebAudio beeps)</label><br><br>
-<label>Theme <select id="themeSel"><option value="dark">Dark</option><option value="light">Light</option></select></label><br><br>
-<button id="resetBtn" class="ghost">Reset Progress…</button></div>
-<div class="panel"><h3>About</h3><p>LUMORA Playable Prototype — Web (single-file live version). This is the verifiable playable version of the same 50 levels and puzzle logic as the Unity project, until the Unity Android build is made on the owner's laptop. Core play works offline after first load; progress stays in your browser (localStorage).</p></div>
+
+<!-- HOME -->
+<section id="screen-home" class="screen active">
+  <div class="home-inner">
+    <div class="game-icon" aria-hidden="true">
+      <svg viewBox="0 0 100 100">
+        <defs><radialGradient id="orbGrad" cx="35%" cy="30%" r="80%">
+          <stop offset="0%" stop-color="#e0f2fe"/><stop offset="38%" stop-color="#38bdf8"/>
+          <stop offset="72%" stop-color="#7c3aed"/><stop offset="100%" stop-color="#4c1d95"/>
+        </radialGradient></defs>
+        <ellipse cx="50" cy="52" rx="40" ry="13" fill="none" stroke="#ffd34d" stroke-width="3" opacity="0.85" transform="rotate(-18 50 52)"/>
+        <circle cx="50" cy="50" r="24" fill="url(#orbGrad)"/>
+        <circle cx="42" cy="41" r="7" fill="#ffffff" opacity="0.75"/>
+        <path d="M78 16 l2.4 6.2 6.2 2.4 -6.2 2.4 -2.4 6.2 -2.4 -6.2 -6.2 -2.4 6.2 -2.4 z" fill="#ffd34d"/>
+        <path d="M18 66 l1.7 4.4 4.4 1.7 -4.4 1.7 -1.7 4.4 -1.7 -4.4 -4.4 -1.7 4.4 -1.7 z" fill="#f472b6"/>
+      </svg>
+      <span class="icon-spark s1">✦</span><span class="icon-spark s2">✦</span>
+    </div>
+    <h1 class="game-title">LUMORA</h1>
+    <div class="game-subtitle">THE LIVING PUZZLE WORLD</div>
+    <div class="home-stats"><span id="homeStars">★ 0 / 150</span><span class="dot">•</span><span id="homeProgress">Levels 0 / 50</span></div>
+    <div class="home-buttons">
+      <button id="playBtn" class="btn btn-play">▶ PLAY</button>
+      <button id="homeLevelsBtn" class="btn btn-glass"><span class="btn-ico">▦</span> LEVELS</button>
+      <button id="homeSettingsBtn" class="btn btn-glass"><span class="btn-ico">⚙</span> SETTINGS</button>
+    </div>
+    <p class="home-about">Version 2.0 · LUMORA Playable Prototype — Web<br>Guest Mode — no login, progress saved on this device</p>
+  </div>
+</section>
+
+<!-- LEVELS -->
+<section id="screen-levels" class="screen">
+  <div class="screen-head">
+    <button class="icon-btn" data-nav="home" aria-label="Back">←</button>
+    <h2 class="screen-title">LEVELS</h2>
+    <div class="head-spacer"></div>
+  </div>
+  <div id="levelsList"></div>
+</section>
+
+<!-- SETTINGS -->
+<section id="screen-settings" class="screen">
+  <div class="screen-head">
+    <button class="icon-btn" data-nav="home" aria-label="Back">←</button>
+    <h2 class="screen-title">SETTINGS</h2>
+    <div class="head-spacer"></div>
+  </div>
+  <div class="set-section">GENERAL</div>
+  <div class="set-row"><span class="set-label">🔊 Sound Effects</span>
+    <label class="switch"><input type="checkbox" id="soundToggle"><span class="track"><span class="knob"></span></span></label></div>
+  <div class="set-row"><span class="set-label">🎨 Theme</span>
+    <select id="themeSel"><option value="dark">Dark</option><option value="light">Light</option></select></div>
+  <div class="set-section">TESTING</div>
+  <div class="set-row"><span class="set-label">🔓 Test: Unlock All Levels</span>
+    <label class="switch"><input type="checkbox" id="unlockAllToggle"><span class="track"><span class="knob"></span></span></label></div>
+  <div class="set-section">DATA</div>
+  <button class="set-row set-btn" id="resetBtn"><span class="set-label">🗑 Reset Progress</span><span class="chev">›</span></button>
+  <div class="set-section">ABOUT</div>
+  <div class="set-row about-row"><span>Version 2.0 · LUMORA Playable Prototype — Web · Guest Mode, no login, progress saved on this device</span></div>
+</section>
+
+<!-- GAMEPLAY -->
+<section id="screen-game" class="screen">
+  <div class="game-topbar">
+    <button id="gameBackBtn" class="icon-btn" aria-label="Back to levels">←</button>
+    <div class="timer" id="timer">⏱ 00:00</div>
+    <div class="game-level-title" id="gameLevelTitle">LEVEL 1</div>
+    <button id="retryBtn" class="icon-btn" aria-label="Retry">↻</button>
+    <button id="pauseBtn" class="icon-btn" aria-label="Pause">⏸</button>
+    <button id="hintBtn" class="icon-btn" aria-label="Hint">💡<span class="badge" id="hintBadge">3</span></button>
+  </div>
+  <div class="world-line" id="worldName">Loading…</div>
+  <div class="sub center" id="parInfo"></div>
+  <div class="sub center" id="progress"></div>
+  <div class="board-wrap">
+    <div id="board"></div>
+    <div id="pauseOverlay" class="overlay hidden"><div class="overlay-card">
+      <div class="overlay-title">⏸ Paused</div>
+      <button id="resumeBtn" class="btn btn-world">Resume</button>
+      <button id="pauseLevelsBtn" class="btn btn-glass">Levels</button>
+    </div></div>
+    <div id="complete" class="overlay hidden"><div class="overlay-card">
+      <div class="stars" id="stars"></div>
+      <div class="overlay-title">Portal reached!</div>
+      <p class="sub center" id="completeInfo"></p>
+      <button id="nextBtn" class="btn btn-world">Next Level →</button>
+      <button id="replayBtn" class="btn btn-glass">↻ Replay</button>
+      <button id="completeLevelsBtn" class="btn btn-glass">Levels</button>
+    </div></div>
+  </div>
+  <p class="sub center hint-line" id="hintLine">Tap a tile to rotate it. Guide the glow from the blue source to the pink portal.</p>
+</section>
+
 </div><script>
 const EMBEDDED_DATA={
   "game": "LUMORA",
@@ -12207,15 +12492,27 @@ const EMBEDDED_DATA={
   ]
 };
 "use strict";
-// LUMORA Playable Prototype — Web. Same levels.json + same connection logic as Unity PuzzleEngine.
+// LUMORA Playable Prototype — Web (V2 multi-screen app).
+// Same levels.json data and the SAME connection logic as the Unity PuzzleEngine:
+// BASE direction sets, BFS energized() from source, starsFor() thresholds — unchanged from V1.
+// V2 adds: HOME / LEVELS / SETTINGS / GAMEPLAY screens, lock progression, per-world
+// animated gradient accents, glossy tiles with animated rotation, and a level timer.
 const BASE={source:[1],portal:[3],straight:[1,3],curve:[1,2],tee:[0,1,2],node:[0,1,2,3],blocker:[],empty:[]};
 const DIRS=[[-1,0],[0,1],[1,0],[0,-1]]; const OPP={0:2,1:3,2:0,3:1};
 const WORLD_COLORS={"Crystal Valley":"#38bdf8","Neon Forest":"#4ade80","Floating Islands":"#a78bfa","Frozen Dreams":"#93c5fd","Solar Kingdom":"#fbbf24","Shadow Dimension":"#e879f9"};
-let DATA=null, idx=0, rots={}, moves=0, hintsLeft=3, completed=false, startTime=0, paused=false;
-let save=JSON.parse(localStorage.getItem("lumora_save")||"{}"); if(!save.stars)save.stars={}; if(!save.settings)save.settings={sound:true,theme:"dark"};
+// Animated gameplay gradient pair per world (drives --world1/--world2 + .btn-world).
+const WORLD_GRADIENTS={"Crystal Valley":["#38bdf8","#0369a1"],"Neon Forest":["#4ade80","#15803d"],"Floating Islands":["#a78bfa","#6d28d9"],"Frozen Dreams":["#7dd3fc","#2563eb"],"Solar Kingdom":["#fbbf24","#ea580c"],"Shadow Dimension":["#e879f9","#a21caf"]};
+const IS_BROWSER=typeof window!=="undefined"&&typeof document!=="undefined";
+let DATA=null, idx=0, rots={}, dispRot={}, moves=0, hintsLeft=3, hintedKey=null, completed=false, paused=false;
+let elapsed=0, currentScreen="home";
+const cellEls={};
+function defaultSave(){ return {stars:{},settings:{sound:true,theme:"dark",unlockAll:false}}; }
+let save=defaultSave();
+if(IS_BROWSER){ try{ const raw=localStorage.getItem("lumora_save"); if(raw){ const p=JSON.parse(raw);
+  if(p&&typeof p==="object"){ save.stars=p.stars||{}; save.settings=Object.assign(defaultSave().settings,p.settings||{}); } } }catch(e){} }
 let audioCtx=null;
-function persist(){localStorage.setItem("lumora_save",JSON.stringify(save));}
-function beep(freq){ if(!save.settings.sound)return; try{ audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)(); const o=audioCtx.createOscillator(),g=audioCtx.createGain(); o.frequency.value=freq||520; g.gain.value=0.06; o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+0.09);}catch(e){} }
+function persist(){ if(!IS_BROWSER)return; try{ localStorage.setItem("lumora_save",JSON.stringify(save)); }catch(e){} }
+function beep(freq){ if(!IS_BROWSER||!save.settings.sound)return; try{ audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)(); const o=audioCtx.createOscillator(),g=audioCtx.createGain(); o.frequency.value=freq||520; g.gain.value=0.06; o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+0.09);}catch(e){} }
 function conns(t,rot){ if(t==="node"||t==="blocker"||t==="empty")return BASE[t]; return BASE[t].map(d=>(d+rot)%4); }
 function level(){return DATA.levels[idx];}
 function energized(useRots){
@@ -12226,54 +12523,128 @@ function energized(useRots){
       if(map[k]&&!seen.has(k)&&conns(map[k].type,useRots[k]).includes(OPP[d])){seen.add(k);q.push([nr,nc]);} } }
   return seen;
 }
-function render(){
-  const lv=level(); document.getElementById("worldName").textContent="Level "+lv.id+" · "+lv.worldName+" · "+lv.difficulty;
-  document.getElementById("progress").textContent="Completed: "+Object.keys(save.stars).length+" / 50 · Moves: "+moves+" · Hints left: "+hintsLeft;
-  document.getElementById("parInfo").textContent="Par (perfect rotations): "+lv.parMoves+" · 3★ ≤ "+lv.starThresholds.threeStarMoves+" moves · 2★ ≤ "+lv.starThresholds.twoStarMoves+" moves";
-  const en=energized(rots); const board=document.getElementById("board"); board.innerHTML="";
+function starsFor(m,lv){ if(m<=lv.starThresholds.threeStarMoves)return 3; if(m<=lv.starThresholds.twoStarMoves)return 2; return 1; }
+function fmtTime(s){ const m=Math.floor(s/60),ss=s%60; return String(m).padStart(2,"0")+":"+String(ss).padStart(2,"0"); }
+
+/* ---------- progression / locking ---------- */
+function completedCount(){ return Object.keys(save.stars).length; }
+function totalStars(){ return Object.values(save.stars).reduce((a,b)=>a+b,0); }
+function isUnlocked(i){ if(save.settings.unlockAll)return true; if(i===0)return true;
+  if(save.stars[DATA.levels[i].id])return true; return !!save.stars[DATA.levels[i-1].id]; }
+function currentLevelIndex(){ for(let i=0;i<DATA.levels.length;i++){ if(isUnlocked(i)&&!save.stars[DATA.levels[i].id])return i; } return -1; }
+
+/* ---------- screens ---------- */
+function showScreen(name){ currentScreen=name;
+  document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.id==="screen-"+name));
+  window.scrollTo(0,0);
+  if(name==="home")updateHome(); if(name==="levels")buildLevels(); }
+function updateHome(){ document.getElementById("homeStars").textContent="★ "+totalStars()+" / "+(DATA.levels.length*3);
+  document.getElementById("homeProgress").textContent="Levels "+completedCount()+" / "+DATA.levels.length; }
+function buildLevels(){ const host=document.getElementById("levelsList"); host.innerHTML="";
+  const cur=currentLevelIndex(); let lastWorld=null,grid=null;
+  DATA.levels.forEach((lv,i)=>{ if(lv.worldName!==lastWorld){ lastWorld=lv.worldName;
+      const head=document.createElement("div"); head.className="world-head";
+      head.style.setProperty("--wc",WORLD_COLORS[lv.worldName]||"#a78bfa");
+      const doneInWorld=DATA.levels.filter(l=>l.worldName===lv.worldName&&save.stars[l.id]).length;
+      const totalInWorld=DATA.levels.filter(l=>l.worldName===lv.worldName).length;
+      head.innerHTML='<span class="world-dot"></span><span>'+lv.worldName+'</span><span class="world-count">'+doneInWorld+" / "+totalInWorld+" done</span>";
+      host.appendChild(head); grid=document.createElement("div"); grid.className="lvl-grid"; host.appendChild(grid); }
+    const unlocked=isUnlocked(i), done=!!save.stars[lv.id];
+    const tile=document.createElement("button"); tile.type="button";
+    tile.className="lvl-tile"+(done?" completed":"")+(i===cur?" current":"")+(!unlocked?" locked":"");
+    tile.innerHTML='<span class="num">'+lv.id+'</span><span class="lstars">'+(done?"★".repeat(save.stars[lv.id]):"")+'</span>'+(!unlocked?'<span class="lock">🔒</span>':"");
+    if(unlocked)tile.onclick=()=>openLevel(i); grid.appendChild(tile); }); }
+
+/* ---------- gameplay ---------- */
+function applyWorldTheme(lv){ const g=WORLD_GRADIENTS[lv.worldName]||["#a78bfa","#6d28d9"];
+  document.documentElement.style.setProperty("--world1",g[0]);
+  document.documentElement.style.setProperty("--world2",g[1]);
+  document.documentElement.style.setProperty("--accent",g[0]); }
+function loadLevel(i){ idx=Math.max(0,Math.min(DATA.levels.length-1,i)); const lv=level();
+  rots={}; dispRot={}; lv.tiles.forEach(t=>{ rots[t.r+","+t.c]=t.rotation; dispRot[t.r+","+t.c]=t.rotation*90; });
+  moves=0; hintsLeft=3; hintedKey=null; completed=false; paused=false; elapsed=0;
+  applyWorldTheme(lv); buildBoard(); updateBoard();
+  document.getElementById("pauseOverlay").classList.add("hidden");
+  document.getElementById("hintLine").textContent="Tap a tile to rotate it. Guide the glow from the blue source to the pink portal.";
+  document.getElementById("timer").textContent="⏱ 00:00"; }
+function openLevel(i){ loadLevel(i); showScreen("game"); }
+function buildBoard(){ const lv=level(); const board=document.getElementById("board"); board.innerHTML="";
   board.style.gridTemplateColumns="repeat("+lv.gridCols+",1fr)";
+  Object.keys(cellEls).forEach(k=>delete cellEls[k]);
   const sorted=[...lv.tiles].sort((a,b)=>a.r-b.r||a.c-b.c);
   for(const t of sorted){ const k=t.r+","+t.c; const div=document.createElement("div");
-    div.className="cell "+t.type+(en.has(k)?" on":""); div.dataset.k=k;
-    for(const d of conns(t.type,rots[k])){ const s=document.createElement("div"); s.className="arm "+["n","e","s","w"][d]; div.appendChild(s); }
+    div.className="cell "+t.type; div.dataset.k=k;
+    const rot=document.createElement("div"); rot.className="rotator";
+    for(const d of BASE[t.type]){ const s=document.createElement("div"); s.className="arm "+["n","e","s","w"][d]; rot.appendChild(s); }
+    rot.style.transform="rotate("+dispRot[k]+"deg)"; div.appendChild(rot);
     const core=document.createElement("div"); core.className="core"; div.appendChild(core);
-    div.onclick=()=>tap(t); board.appendChild(div); }
+    div.onclick=()=>tap(t); board.appendChild(div); cellEls[k]=div; } }
+function updateBoard(){ const lv=level();
+  document.getElementById("gameLevelTitle").textContent="LEVEL "+lv.id;
+  document.getElementById("worldName").textContent=lv.worldName+" · "+lv.difficulty;
+  document.getElementById("parInfo").textContent="Par (perfect rotations): "+lv.parMoves+" · 3★ ≤ "+lv.starThresholds.threeStarMoves+" moves · 2★ ≤ "+lv.starThresholds.twoStarMoves+" moves";
+  document.getElementById("progress").textContent="Moves: "+moves+" · Completed: "+completedCount()+" / "+DATA.levels.length;
+  document.getElementById("hintBadge").textContent=hintsLeft;
+  const en=energized(rots);
+  for(const k in cellEls){ const el=cellEls[k]; el.classList.toggle("on",en.has(k));
+    el.classList.toggle("hinted",k===hintedKey);
+    el.querySelector(".rotator").style.transform="rotate("+dispRot[k]+"deg)"; }
   document.getElementById("complete").classList.toggle("hidden",!completed);
-  if(completed){ const st=starsFor(moves,lv); document.getElementById("stars").textContent="★".repeat(st)+"☆".repeat(3-st); document.getElementById("confetti").textContent="✨ 🎉 ✨ Level Complete! ✨ 🎉 ✨"; }
-  else document.getElementById("confetti").textContent="";
-}
-function starsFor(m,lv){ if(m<=lv.starThresholds.threeStarMoves)return 3; if(m<=lv.starThresholds.twoStarMoves)return 2; return 1; }
-function loadLevel(i){ idx=Math.max(0,Math.min(DATA.levels.length-1,i)); const lv=level(); rots={}; lv.tiles.forEach(t=>rots[t.r+","+t.c]=t.rotation); moves=0; hintsLeft=3; completed=false; paused=false; startTime=Date.now(); render(); }
-function tap(t){ if(completed||paused)return; if(["blocker","empty","node"].includes(t.type))return; const k=t.r+","+t.c; rots[k]=(rots[k]+1)%4; moves++; beep(480+moves*4);
-  const lv=level(); const en=energized(rots); if(en.has(lv.portal.r+","+lv.portal.c)){ completed=true; const st=starsFor(moves,lv); if(!save.stars[lv.id]||st>save.stars[lv.id])save.stars[lv.id]=st; persist(); beep(880); } render(); }
-function hint(){ if(hintsLeft<=0||completed){alert("No hints left for this level.");return;} const lv=level();
+  if(completed){ const st=starsFor(moves,lv);
+    document.getElementById("stars").textContent="★".repeat(st)+"☆".repeat(3-st);
+    document.getElementById("completeInfo").textContent="Solved in "+moves+" moves · "+fmtTime(elapsed);
+    document.getElementById("nextBtn").textContent=idx<DATA.levels.length-1?"Next Level →":"🏆 Finish — Levels"; } }
+function tap(t){ if(completed||paused||currentScreen!=="game")return; if(["blocker","empty","node"].includes(t.type))return;
+  const k=t.r+","+t.c; rots[k]=(rots[k]+1)%4; dispRot[k]+=90; moves++; beep(480+moves*4);
+  const lv=level(); const en=energized(rots);
+  if(en.has(lv.portal.r+","+lv.portal.c)){ completed=true; const st=starsFor(moves,lv);
+    if(!save.stars[lv.id]||st>save.stars[lv.id])save.stars[lv.id]=st; persist(); beep(880); }
+  updateBoard(); }
+function hint(){ if(currentScreen!=="game"||completed||paused)return;
+  if(hintsLeft<=0){ document.getElementById("hintLine").textContent="No hints left for this level."; return; }
+  const lv=level();
   const bad=lv.tiles.find(t=>!["blocker","empty","node"].includes(t.type)&&rots[t.r+","+t.c]!==t.solutionRotation);
-  if(!bad){alert("Every tile is already correct!");return;} hintsLeft--;
-  document.querySelectorAll(".cell").forEach(c=>{ if(c.dataset.k===bad.r+","+bad.c)c.classList.add("hinted"); }); beep(660);
-  document.getElementById("progress").textContent="Completed: "+Object.keys(save.stars).length+" / 50 · Moves: "+moves+" · Hints left: "+hintsLeft+" — Hint: "+lv.hint; }
-function buildSelect(){ const sel=document.getElementById("levelSelect"); sel.innerHTML=""; DATA.levels.forEach((lv,i)=>{ const o=document.createElement("option"); o.value=i; o.textContent="Level "+lv.id+" — "+lv.worldName+" ("+lv.difficulty+")"+(save.stars[lv.id]?" ★"+save.stars[lv.id]:""); sel.appendChild(o); }); sel.value=idx; }
-let touchY=null;
-document.addEventListener("touchstart",e=>touchY=e.touches[0].clientY,{passive:true});
-document.addEventListener("touchend",e=>{ if(touchY===null)return; const dy=e.changedTouches[0].clientY-touchY; if(dy<-70)loadLevel(idx+1); else if(dy>70)loadLevel(idx-1); touchY=null; buildSelect(); },{passive:true});
-async function init(){
-  applyTheme();
-  DATA=EMBEDDED_DATA;
-  buildSelect(); loadLevel(0);
-  document.getElementById("prevBtn").onclick=()=>{loadLevel(idx-1);buildSelect();};
-  document.getElementById("nextBtn").onclick=()=>{loadLevel(idx+1);buildSelect();};
-  document.getElementById("retryBtn").onclick=()=>loadLevel(idx);
-  document.getElementById("hintBtn").onclick=hint;
-  document.getElementById("pauseBtn").onclick=()=>{paused=!paused;alert(paused?"Paused. Tap OK to resume.":"Resumed."); if(paused===false)render();};
-  document.getElementById("goBtn").onclick=()=>{loadLevel(parseInt(document.getElementById("levelSelect").value,10));};
-  document.getElementById("soundToggle").checked=!!save.settings.sound;
-  document.getElementById("soundToggle").onchange=e=>{save.settings.sound=e.target.checked;persist();};
-  document.getElementById("themeSel").value=save.settings.theme||"dark";
-  document.getElementById("themeSel").onchange=e=>{save.settings.theme=e.target.value;persist();applyTheme();};
-  document.getElementById("resetBtn").onclick=()=>{ if(confirm("Reset all LUMORA progress?")){save={stars:{},settings:save.settings};persist();buildSelect();loadLevel(0);} };
+  if(!bad){ document.getElementById("hintLine").textContent="Every tile is already correct!"; return; }
+  hintsLeft--; hintedKey=bad.r+","+bad.c; beep(660);
+  document.getElementById("hintLine").textContent="💡 Hint: "+lv.hint; updateBoard(); }
+function tick(){ if(currentScreen==="game"&&!paused&&!completed){ elapsed++;
+  document.getElementById("timer").textContent="⏱ "+fmtTime(elapsed); } }
+
+/* ---------- data + init ---------- */
+async function loadData(){
+  if(typeof EMBEDDED_DATA!=="undefined")return EMBEDDED_DATA;
+  throw new Error("levels data not embedded in this build");
 }
 function applyTheme(){ document.body.classList.toggle("light",(save.settings.theme||"dark")==="light"); }
-document.addEventListener("DOMContentLoaded",init);
-// Exported for Node simulation test (ignored in browser).
-if(typeof module!=="undefined")module.exports={BASE,conns,energized,starsFor};
+async function init(){
+  applyTheme();
+  try{ DATA=await loadData(); }
+  catch(e){ document.querySelector(".home-about").textContent="Could not load level data — please open the game over HTTP (or use the single-file build), then reload."; return; }
+  document.getElementById("playBtn").onclick=()=>{ const t=currentLevelIndex(); openLevel(t<0?0:t); };
+  document.getElementById("homeLevelsBtn").onclick=()=>showScreen("levels");
+  document.getElementById("homeSettingsBtn").onclick=()=>showScreen("settings");
+  document.querySelectorAll("[data-nav]").forEach(b=>b.onclick=()=>showScreen(b.dataset.nav));
+  document.getElementById("gameBackBtn").onclick=()=>{ paused=false; document.getElementById("pauseOverlay").classList.add("hidden"); showScreen("levels"); };
+  document.getElementById("retryBtn").onclick=()=>{ if(currentScreen==="game")loadLevel(idx); };
+  document.getElementById("hintBtn").onclick=hint;
+  document.getElementById("pauseBtn").onclick=()=>{ if(completed)return; paused=true; document.getElementById("pauseOverlay").classList.remove("hidden"); };
+  document.getElementById("resumeBtn").onclick=()=>{ paused=false; document.getElementById("pauseOverlay").classList.add("hidden"); };
+  document.getElementById("pauseLevelsBtn").onclick=()=>{ paused=false; document.getElementById("pauseOverlay").classList.add("hidden"); showScreen("levels"); };
+  document.getElementById("nextBtn").onclick=()=>{ if(idx<DATA.levels.length-1)openLevel(idx+1); else showScreen("levels"); };
+  document.getElementById("replayBtn").onclick=()=>loadLevel(idx);
+  document.getElementById("completeLevelsBtn").onclick=()=>showScreen("levels");
+  const soundT=document.getElementById("soundToggle"); soundT.checked=!!save.settings.sound;
+  soundT.onchange=e=>{ save.settings.sound=e.target.checked; persist(); if(e.target.checked)beep(660); };
+  const themeSel=document.getElementById("themeSel"); themeSel.value=save.settings.theme||"dark";
+  themeSel.onchange=e=>{ save.settings.theme=e.target.value; persist(); applyTheme(); };
+  const unlockT=document.getElementById("unlockAllToggle"); unlockT.checked=!!save.settings.unlockAll;
+  unlockT.onchange=e=>{ save.settings.unlockAll=e.target.checked; persist(); };
+  document.getElementById("resetBtn").onclick=()=>{ if(confirm("Reset all LUMORA progress?")){ const st=save.settings; save=defaultSave(); save.settings=st; persist(); updateHome(); } };
+  setInterval(tick,1000);
+  showScreen("home");
+}
+if(IS_BROWSER)document.addEventListener("DOMContentLoaded",init);
+// Exported for the Node simulation test (ignored in browser).
+if(typeof module!=="undefined")module.exports={BASE,conns,energized,starsFor,_setData:function(d,i){DATA=d;idx=i||0;}};
 
 </script></body></html>
