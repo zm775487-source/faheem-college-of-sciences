@@ -1,1 +1,7 @@
-{"adsEnabled":true,"announcement":"Welcome to LUMORA — 50 magical puzzles! 🎉","maintenanceMode":false,"testAds":true,"version":2}
+{
+  "version": 2,
+  "maintenanceMode": false,
+  "adsEnabled": true,
+  "announcement": "Welcome to LUMORA",
+  "testAds": true
+}
