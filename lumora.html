@@ -191,6 +191,12 @@ body.light #board .cell{background:linear-gradient(145deg,#cfc2f5,#a78bfa 60%,#8
   text-shadow:0 0 18px rgba(251,191,36,.85),0 3px 0 rgba(120,53,15,.6);animation:starPop .5s ease}
 @keyframes starPop{0%{transform:scale(.4);opacity:0}60%{transform:scale(1.18)}100%{transform:scale(1);opacity:1}}
 
+/* ---------- V3: moves-limit warning + Level Failed ---------- */
+#progress.warn{color:#f87171;font-weight:800}
+.fail-card{border-color:rgba(248,113,113,.55);
+  background:linear-gradient(160deg,#3d1f33,#21122b)}
+.fail-emoji{font-size:42px;line-height:1.1;animation:starPop .5s ease}
+
 </style></head>
 <body><div id="app">
 
@@ -265,7 +271,7 @@ body.light #board .cell{background:linear-gradient(145deg,#cfc2f5,#a78bfa 60%,#8
       <button id="homeLevelsBtn" class="btn btn-glass"><span class="btn-ico">▦</span> LEVELS</button>
       <button id="homeSettingsBtn" class="btn btn-glass"><span class="btn-ico">⚙</span> SETTINGS</button>
     </div>
-    <p class="home-about">Version 2.0 · LUMORA Playable Prototype — Web<br>Guest Mode — no login, progress saved on this device</p>
+    <p class="home-about">Version 3.0 · LUMORA Playable Prototype — Web<br>Guest Mode — no login, progress saved on this device</p>
   </div>
 </section>
 
@@ -297,7 +303,7 @@ body.light #board .cell{background:linear-gradient(145deg,#cfc2f5,#a78bfa 60%,#8
   <div class="set-section">DATA</div>
   <button class="set-row set-btn" id="resetBtn"><span class="set-label">🗑 Reset Progress</span><span class="chev">›</span></button>
   <div class="set-section">ABOUT</div>
-  <div class="set-row about-row"><span>Version 2.0 · LUMORA Playable Prototype — Web · Guest Mode, no login, progress saved on this device</span></div>
+  <div class="set-row about-row"><span>Version 3.0 · LUMORA Playable Prototype — Web · Guest Mode, no login, progress saved on this device</span></div>
 </section>
 
 <!-- GAMEPLAY -->
@@ -327,6 +333,14 @@ body.light #board .cell{background:linear-gradient(145deg,#cfc2f5,#a78bfa 60%,#8
       <button id="nextBtn" class="btn btn-world">Next Level →</button>
       <button id="replayBtn" class="btn btn-glass">↻ Replay</button>
       <button id="completeLevelsBtn" class="btn btn-glass">Levels</button>
+    </div></div>
+    <div id="failed" class="overlay hidden"><div class="overlay-card fail-card">
+      <div class="fail-emoji">💔</div>
+      <div class="overlay-title">Level Failed!</div>
+      <p class="sub center">Out of moves — moves khatam ho gaye. Phir koshish karo!</p>
+      <p class="sub center" id="failedInfo"></p>
+      <button id="failedRetryBtn" class="btn btn-world">↻ Retry</button>
+      <button id="failedLevelsBtn" class="btn btn-glass">Levels</button>
     </div></div>
   </div>
   <p class="sub center hint-line" id="hintLine">Tap a tile to rotate it. Guide the glow from the blue source to the pink portal.</p>
@@ -12503,7 +12517,8 @@ const WORLD_COLORS={"Crystal Valley":"#38bdf8","Neon Forest":"#4ade80","Floating
 // Animated gameplay gradient pair per world (drives --world1/--world2 + .btn-world).
 const WORLD_GRADIENTS={"Crystal Valley":["#38bdf8","#0369a1"],"Neon Forest":["#4ade80","#15803d"],"Floating Islands":["#a78bfa","#6d28d9"],"Frozen Dreams":["#7dd3fc","#2563eb"],"Solar Kingdom":["#fbbf24","#ea580c"],"Shadow Dimension":["#e879f9","#a21caf"]};
 const IS_BROWSER=typeof window!=="undefined"&&typeof document!=="undefined";
-let DATA=null, idx=0, rots={}, dispRot={}, moves=0, hintsLeft=3, hintedKey=null, completed=false, paused=false;
+let DATA=null, idx=0, rots={}, dispRot={}, moves=0, hintsLeft=3, hintedKey=null, completed=false, failed=false, paused=false;
+let limit=0;
 let elapsed=0, currentScreen="home";
 const cellEls={};
 function defaultSave(){ return {stars:{},settings:{sound:true,theme:"dark",unlockAll:false}}; }
@@ -12524,6 +12539,63 @@ function energized(useRots){
   return seen;
 }
 function starsFor(m,lv){ if(m<=lv.starThresholds.threeStarMoves)return 3; if(m<=lv.starThresholds.twoStarMoves)return 2; return 1; }
+/* Fair per-level moves limit: the exact number of taps needed to rotate every
+   tappable tile from its start rotation to its solution rotation, plus 12 spare
+   taps. By construction every level stays beatable inside its limit. */
+function movesLimit(lv){ let s=0; for(const t of lv.tiles){ if(["blocker","empty","node"].includes(t.type))continue;
+  s+=((t.solutionRotation-t.rotation)%4+4)%4; } return s+12; }
+
+/* ---------- V3 audio: band-baja win + fail sting (all synthesized, no files) ---------- */
+function audioNow(){ if(!IS_BROWSER||!save.settings.sound)return null;
+  try{ audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state==="suspended")audioCtx.resume(); return audioCtx; }catch(e){ return null; } }
+function toneAt(ctx,dest,t0,freq,dur,type,vol,slideTo){ const o=ctx.createOscillator(),g=ctx.createGain();
+  o.type=type; o.frequency.setValueAtTime(freq,t0);
+  if(slideTo)o.frequency.exponentialRampToValueAtTime(slideTo,t0+dur);
+  g.gain.setValueAtTime(0,t0); g.gain.linearRampToValueAtTime(vol,t0+0.02);
+  g.gain.exponentialRampToValueAtTime(0.001,t0+dur);
+  o.connect(g); g.connect(dest); o.start(t0); o.stop(t0+dur+0.05); return o; }
+function noiseAt(ctx,dest,t0,dur,vol,freq,fType){ const len=Math.max(1,(ctx.sampleRate*dur)|0);
+  const buf=ctx.createBuffer(1,len,ctx.sampleRate),ch=buf.getChannelData(0);
+  for(let i=0;i<len;i++)ch[i]=Math.random()*2-1;
+  const src=ctx.createBufferSource(); src.buffer=buf;
+  const f=ctx.createBiquadFilter(); f.type=fType||"lowpass"; f.frequency.value=freq;
+  const g=ctx.createGain(); g.gain.setValueAtTime(vol,t0);
+  g.gain.exponentialRampToValueAtTime(0.001,t0+dur);
+  src.connect(f); f.connect(g); g.connect(dest); src.start(t0); src.stop(t0+dur+0.02); }
+/* Band-baja celebration (~3.5 s): dhol thumps + noise skin, tasha ticks on the
+   off-beats, and an original cheerful shehnai-style lead (sawtooth + lowpass +
+   vibrato) in C major, ending on a shimmer. Composed for LUMORA — no samples. */
+function playWinBand(){ const ctx=audioNow(); if(!ctx)return; try{
+  const dest=ctx.createGain(); dest.gain.value=0.85; dest.connect(ctx.destination);
+  const t0=ctx.currentTime+0.04, step=0.19;
+  // Dhol: bass thump (sine pitch-drop) + skin slap (band-passed noise).
+  const dholSteps=[0,2,4,5,8,10,12,13,14,15,16,17];
+  for(const s of dholSteps){ const t=t0+s*step;
+    toneAt(ctx,dest,t,150,0.13,"sine",0.55,72); noiseAt(ctx,dest,t,0.06,0.16,900,"bandpass"); }
+  // Tasha: bright high ticks on every off-beat.
+  for(let s=1;s<18;s+=2)noiseAt(ctx,dest,t0+s*step,0.035,0.11,5200,"highpass");
+  // Shehnai lead: one vibrato LFO shared by all melody notes.
+  const lead=ctx.createBiquadFilter(); lead.type="lowpass"; lead.frequency.value=1900; lead.connect(dest);
+  const lfo=ctx.createOscillator(),lfoG=ctx.createGain();
+  lfo.frequency.value=5.6; lfoG.gain.value=5; lfo.connect(lfoG); lfo.start(t0); lfo.stop(t0+3.4);
+  const C5=523.25,D5=587.33,E5=659.25,G5=783.99,A5=880.00,C6=1046.50;
+  const phrase=[[0,C5],[1,E5],[2,G5],[3,A5],[4,G5],[5,E5],[6,D5],[7,E5],
+                [8,G5],[9,A5],[10,G5],[11,E5],[12,D5],[13,C5],[14,E5],[15,G5],[16,C6]];
+  for(const [s,f] of phrase){ const last=s===16;
+    const o=toneAt(ctx,lead,t0+s*step,f,last?0.5:step*0.96,"sawtooth",0.16); lfoG.connect(o.frequency); }
+  // Shimmer finish: three high sine sparkles.
+  [[17,1318.51],[17.7,1567.98],[18.4,2093.00]].forEach(([s,f])=>
+    toneAt(ctx,dest,t0+s*step,f,0.34,"sine",0.10));
+  }catch(e){} }
+/* Fail sting (~1.7 s): descending sad triangle phrase A3 F3 D3 A2 + soft thud. */
+function playFailSound(){ const ctx=audioNow(); if(!ctx)return; try{
+  const dest=ctx.createGain(); dest.gain.value=0.8; dest.connect(ctx.destination);
+  const t0=ctx.currentTime+0.04;
+  [[220.00,0],[174.61,0.36],[146.83,0.72],[110.00,1.08]].forEach(([f,off])=>
+    toneAt(ctx,dest,t0+off,f,0.46,"triangle",0.28));
+  toneAt(ctx,dest,t0+1.5,92,0.3,"sine",0.32,48);
+  }catch(e){} }
 function fmtTime(s){ const m=Math.floor(s/60),ss=s%60; return String(m).padStart(2,"0")+":"+String(ss).padStart(2,"0"); }
 
 /* ---------- progression / locking ---------- */
@@ -12562,9 +12634,11 @@ function applyWorldTheme(lv){ const g=WORLD_GRADIENTS[lv.worldName]||["#a78bfa",
   document.documentElement.style.setProperty("--accent",g[0]); }
 function loadLevel(i){ idx=Math.max(0,Math.min(DATA.levels.length-1,i)); const lv=level();
   rots={}; dispRot={}; lv.tiles.forEach(t=>{ rots[t.r+","+t.c]=t.rotation; dispRot[t.r+","+t.c]=t.rotation*90; });
-  moves=0; hintsLeft=3; hintedKey=null; completed=false; paused=false; elapsed=0;
+  moves=0; hintsLeft=3; hintedKey=null; completed=false; failed=false; paused=false; elapsed=0;
+  limit=movesLimit(lv);
   applyWorldTheme(lv); buildBoard(); updateBoard();
   document.getElementById("pauseOverlay").classList.add("hidden");
+  document.getElementById("failed").classList.add("hidden");
   document.getElementById("hintLine").textContent="Tap a tile to rotate it. Guide the glow from the blue source to the pink portal.";
   document.getElementById("timer").textContent="⏱ 00:00"; }
 function openLevel(i){ loadLevel(i); showScreen("game"); }
@@ -12583,31 +12657,41 @@ function updateBoard(){ const lv=level();
   document.getElementById("gameLevelTitle").textContent="LEVEL "+lv.id;
   document.getElementById("worldName").textContent=lv.worldName+" · "+lv.difficulty;
   document.getElementById("parInfo").textContent="Par (perfect rotations): "+lv.parMoves+" · 3★ ≤ "+lv.starThresholds.threeStarMoves+" moves · 2★ ≤ "+lv.starThresholds.twoStarMoves+" moves";
-  document.getElementById("progress").textContent="Moves: "+moves+" · Completed: "+completedCount()+" / "+DATA.levels.length;
+  const prog=document.getElementById("progress");
+  prog.textContent="Moves: "+moves+" / "+limit+" · Completed: "+completedCount()+" / "+DATA.levels.length;
+  prog.classList.toggle("warn",!completed&&(limit-moves<=5));
   document.getElementById("hintBadge").textContent=hintsLeft;
   const en=energized(rots);
   for(const k in cellEls){ const el=cellEls[k]; el.classList.toggle("on",en.has(k));
     el.classList.toggle("hinted",k===hintedKey);
     el.querySelector(".rotator").style.transform="rotate("+dispRot[k]+"deg)"; }
+  document.getElementById("failed").classList.toggle("hidden",!failed);
+  if(failed){ document.getElementById("failedInfo").textContent=
+    "Perfect solve: "+lv.parMoves+" moves · 3★ ≤ "+lv.starThresholds.threeStarMoves+" · 2★ ≤ "+lv.starThresholds.twoStarMoves; }
   document.getElementById("complete").classList.toggle("hidden",!completed);
   if(completed){ const st=starsFor(moves,lv);
     document.getElementById("stars").textContent="★".repeat(st)+"☆".repeat(3-st);
     document.getElementById("completeInfo").textContent="Solved in "+moves+" moves · "+fmtTime(elapsed);
     document.getElementById("nextBtn").textContent=idx<DATA.levels.length-1?"Next Level →":"🏆 Finish — Levels"; } }
-function tap(t){ if(completed||paused||currentScreen!=="game")return; if(["blocker","empty","node"].includes(t.type))return;
+function tap(t){ if(completed||failed||paused||currentScreen!=="game")return; if(["blocker","empty","node"].includes(t.type))return;
   const k=t.r+","+t.c; rots[k]=(rots[k]+1)%4; dispRot[k]+=90; moves++; beep(480+moves*4);
   const lv=level(); const en=energized(rots);
+  // Win is checked FIRST: a completing tap wins even if it crosses the limit.
   if(en.has(lv.portal.r+","+lv.portal.c)){ completed=true; const st=starsFor(moves,lv);
-    if(!save.stars[lv.id]||st>save.stars[lv.id])save.stars[lv.id]=st; persist(); beep(880); }
+    if(!save.stars[lv.id]||st>save.stars[lv.id])save.stars[lv.id]=st; persist(); playWinBand(); }
+  else if(moves>limit){ failed=true; playFailSound(); }
   updateBoard(); }
-function hint(){ if(currentScreen!=="game"||completed||paused)return;
+function hint(){ if(currentScreen!=="game"||completed||failed||paused)return;
   if(hintsLeft<=0){ document.getElementById("hintLine").textContent="No hints left for this level."; return; }
   const lv=level();
   const bad=lv.tiles.find(t=>!["blocker","empty","node"].includes(t.type)&&rots[t.r+","+t.c]!==t.solutionRotation);
   if(!bad){ document.getElementById("hintLine").textContent="Every tile is already correct!"; return; }
   hintsLeft--; hintedKey=bad.r+","+bad.c; beep(660);
   document.getElementById("hintLine").textContent="💡 Hint: "+lv.hint; updateBoard(); }
-function tick(){ if(currentScreen==="game"&&!paused&&!completed){ elapsed++;
+/* Giving up on an in-progress level (Retry / Back with moves made, not won or
+   already failed) also plays the fail sting. */
+function giveUpSound(){ if(currentScreen==="game"&&!completed&&!failed&&moves>0)playFailSound(); }
+function tick(){ if(currentScreen==="game"&&!paused&&!completed&&!failed){ elapsed++;
   document.getElementById("timer").textContent="⏱ "+fmtTime(elapsed); } }
 
 /* ---------- data + init ---------- */
@@ -12624,12 +12708,14 @@ async function init(){
   document.getElementById("homeLevelsBtn").onclick=()=>showScreen("levels");
   document.getElementById("homeSettingsBtn").onclick=()=>showScreen("settings");
   document.querySelectorAll("[data-nav]").forEach(b=>b.onclick=()=>showScreen(b.dataset.nav));
-  document.getElementById("gameBackBtn").onclick=()=>{ paused=false; document.getElementById("pauseOverlay").classList.add("hidden"); showScreen("levels"); };
-  document.getElementById("retryBtn").onclick=()=>{ if(currentScreen==="game")loadLevel(idx); };
+  document.getElementById("gameBackBtn").onclick=()=>{ giveUpSound(); paused=false; document.getElementById("pauseOverlay").classList.add("hidden"); showScreen("levels"); };
+  document.getElementById("retryBtn").onclick=()=>{ if(currentScreen==="game"){ giveUpSound(); loadLevel(idx); } };
   document.getElementById("hintBtn").onclick=hint;
-  document.getElementById("pauseBtn").onclick=()=>{ if(completed)return; paused=true; document.getElementById("pauseOverlay").classList.remove("hidden"); };
+  document.getElementById("pauseBtn").onclick=()=>{ if(completed||failed)return; paused=true; document.getElementById("pauseOverlay").classList.remove("hidden"); };
   document.getElementById("resumeBtn").onclick=()=>{ paused=false; document.getElementById("pauseOverlay").classList.add("hidden"); };
-  document.getElementById("pauseLevelsBtn").onclick=()=>{ paused=false; document.getElementById("pauseOverlay").classList.add("hidden"); showScreen("levels"); };
+  document.getElementById("pauseLevelsBtn").onclick=()=>{ giveUpSound(); paused=false; document.getElementById("pauseOverlay").classList.add("hidden"); showScreen("levels"); };
+  document.getElementById("failedRetryBtn").onclick=()=>loadLevel(idx);
+  document.getElementById("failedLevelsBtn").onclick=()=>showScreen("levels");
   document.getElementById("nextBtn").onclick=()=>{ if(idx<DATA.levels.length-1)openLevel(idx+1); else showScreen("levels"); };
   document.getElementById("replayBtn").onclick=()=>loadLevel(idx);
   document.getElementById("completeLevelsBtn").onclick=()=>showScreen("levels");
@@ -12645,6 +12731,6 @@ async function init(){
 }
 if(IS_BROWSER)document.addEventListener("DOMContentLoaded",init);
 // Exported for the Node simulation test (ignored in browser).
-if(typeof module!=="undefined")module.exports={BASE,conns,energized,starsFor,_setData:function(d,i){DATA=d;idx=i||0;}};
+if(typeof module!=="undefined")module.exports={BASE,conns,energized,starsFor,movesLimit,playWinBand,playFailSound,_setData:function(d,i){DATA=d;idx=i||0;}};
 
 </script></body></html>
