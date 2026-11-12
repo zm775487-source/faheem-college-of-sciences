@@ -197,6 +197,46 @@ body.light #board .cell{background:linear-gradient(145deg,#cfc2f5,#a78bfa 60%,#8
   background:linear-gradient(160deg,#3d1f33,#21122b)}
 .fail-emoji{font-size:42px;line-height:1.1;animation:starPop .5s ease}
 
+/* ---------- V4: live-config announcement + TEST AD slots ---------- */
+.announce{margin:2px 12px 4px;max-width:340px;padding:8px 14px;border-radius:999px;text-align:center;
+  font-size:13px;font-weight:700;color:#fff;
+  background:linear-gradient(120deg,rgba(124,58,237,.85),rgba(219,39,119,.85));
+  border:1px solid rgba(255,255,255,.35);
+  box-shadow:0 8px 18px rgba(0,0,0,.4),inset 0 2px 2px rgba(255,255,255,.45)}
+.home-ad{position:relative;width:100%;max-width:340px;margin:14px auto 10px;padding:14px 14px 12px;border-radius:20px;
+  text-align:left;color:#fff;
+  background:linear-gradient(140deg,#5b21b6,#9333ea 48%,#db2777);
+  border:1.5px solid rgba(255,255,255,.35);
+  box-shadow:0 16px 30px rgba(0,0,0,.5),inset 0 2px 3px rgba(255,255,255,.5),inset 0 -10px 18px rgba(0,0,0,.35)}
+.ad-chip{position:absolute;top:9px;right:11px;padding:2px 8px;border-radius:999px;
+  background:rgba(0,0,0,.45);color:#ffd34d;font-size:9.5px;font-weight:900;letter-spacing:1.2px}
+.ad-main{display:flex;align-items:center;gap:11px;margin-bottom:10px;padding-right:52px}
+.ad-emoji{font-size:34px;line-height:1;filter:drop-shadow(0 3px 5px rgba(0,0,0,.45))}
+.ad-emoji.big{font-size:58px;text-align:center;display:block;margin:8px 0 4px}
+.ad-text{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ad-title{font-size:16.5px;font-weight:900;line-height:1.2;text-shadow:0 2px 5px rgba(0,0,0,.4)}
+.ad-title.big{font-size:21px;text-align:center}
+.ad-sub{font-size:12.5px;opacity:.88;line-height:1.35;margin:0}
+.ad-cta{display:block;width:100%;padding:10px;border:0;border-radius:12px;cursor:pointer;
+  font-size:14.5px;font-weight:900;letter-spacing:.4px;color:#4a044e;
+  background:linear-gradient(180deg,#fde68a,#f59e0b);
+  box-shadow:0 6px 14px rgba(0,0,0,.4),inset 0 2px 2px rgba(255,255,255,.7);transition:transform .08s ease}
+.ad-cta:active{transform:scale(.97)}
+.ad-overlay{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;
+  background:rgba(6,3,16,.88);backdrop-filter:blur(4px);padding:18px}
+.ad-card{position:relative;width:100%;max-width:330px;text-align:center;padding:26px 20px 16px;border-radius:26px;color:#fff;
+  background:linear-gradient(160deg,#4c1d95,#7c3aed 55%,#db2777);
+  border:1.5px solid rgba(255,255,255,.35);
+  box-shadow:0 28px 56px rgba(0,0,0,.7),inset 0 2px 3px rgba(255,255,255,.45),inset 0 -12px 22px rgba(0,0,0,.35)}
+.ad-card .ad-chip{top:12px;left:14px;right:auto}
+.ad-close{position:absolute;top:10px;right:10px;min-width:42px;height:34px;padding:0 8px;border-radius:999px;
+  border:1px solid rgba(255,255,255,.4);background:rgba(0,0,0,.5);color:#fff;cursor:pointer;
+  font-size:14px;font-weight:900;display:flex;align-items:center;justify-content:center;gap:4px}
+.ad-close:disabled{opacity:.45;cursor:not-allowed}
+.ad-close #adCount{font-size:12px;color:#ffd34d}
+.ad-cta-btn{margin:14px 0 4px}
+.ad-note{font-size:11px;opacity:.75;margin:10px 0 2px}
+
 </style></head>
 <body><div id="app">
 
@@ -266,12 +306,14 @@ body.light #board .cell{background:linear-gradient(145deg,#cfc2f5,#a78bfa 60%,#8
     <h1 class="game-title">LUMORA</h1>
     <div class="game-subtitle">THE LIVING PUZZLE WORLD</div>
     <div class="home-stats"><span id="homeStars">★ 0 / 150</span><span class="dot">•</span><span id="homeProgress">Levels 0 / 50</span></div>
+    <div id="announce" class="announce hidden"></div>
     <div class="home-buttons">
       <button id="playBtn" class="btn btn-play">▶ PLAY</button>
       <button id="homeLevelsBtn" class="btn btn-glass"><span class="btn-ico">▦</span> LEVELS</button>
       <button id="homeSettingsBtn" class="btn btn-glass"><span class="btn-ico">⚙</span> SETTINGS</button>
     </div>
-    <p class="home-about">Version 3.0 · LUMORA Playable Prototype — Web<br>Guest Mode — no login, progress saved on this device</p>
+    <p class="home-about">Version 4.0 · LUMORA Playable Prototype — Web<br>Guest Mode — no login, progress saved on this device</p>
+    <div id="homeAd" class="home-ad hidden"></div>
   </div>
 </section>
 
@@ -303,7 +345,8 @@ body.light #board .cell{background:linear-gradient(145deg,#cfc2f5,#a78bfa 60%,#8
   <div class="set-section">DATA</div>
   <button class="set-row set-btn" id="resetBtn"><span class="set-label">🗑 Reset Progress</span><span class="chev">›</span></button>
   <div class="set-section">ABOUT</div>
-  <div class="set-row about-row"><span>Version 3.0 · LUMORA Playable Prototype — Web · Guest Mode, no login, progress saved on this device</span></div>
+  <div class="set-row about-row"><span>Version 4.0 · LUMORA Playable Prototype — Web · Guest Mode, no login, progress saved on this device</span></div>
+  <div class="set-row about-row"><span id="backendStatus">Backend: checking…</span></div>
 </section>
 
 <!-- GAMEPLAY -->
@@ -345,6 +388,17 @@ body.light #board .cell{background:linear-gradient(145deg,#cfc2f5,#a78bfa 60%,#8
   </div>
   <p class="sub center hint-line" id="hintLine">Tap a tile to rotate it. Guide the glow from the blue source to the pink portal.</p>
 </section>
+
+<!-- INTERSTITIAL TEST AD (shown after every 3rd level completion) -->
+<div id="adOverlay" class="ad-overlay hidden"><div class="ad-card">
+  <span class="ad-chip">TEST AD</span>
+  <button id="adClose" class="ad-close" disabled aria-label="Close ad">✕<span id="adCount">3</span></button>
+  <div class="ad-emoji big" id="adEmoji">🎨</div>
+  <div class="ad-title big" id="adTitle"></div>
+  <p class="ad-sub" id="adText"></p>
+  <button id="adCta" class="btn btn-play ad-cta-btn">Open</button>
+  <p class="ad-note">TEST AD — test ad hai, asli ads (AdMob) baad mein lagenge.</p>
+</div></div>
 
 </div><script>
 const EMBEDDED_DATA={
@@ -12511,6 +12565,8 @@ const EMBEDDED_DATA={
 // BASE direction sets, BFS energized() from source, starsFor() thresholds — unchanged from V1.
 // V2 adds: HOME / LEVELS / SETTINGS / GAMEPLAY screens, lock progression, per-world
 // animated gradient accents, glossy tiles with animated rotation, and a level timer.
+// V4 adds: live remote config + campaigns from the GitHub Pages live channel
+// (last-known-good cache, offline-safe), Home banner + interstitial TEST AD slots.
 const BASE={source:[1],portal:[3],straight:[1,3],curve:[1,2],tee:[0,1,2],node:[0,1,2,3],blocker:[],empty:[]};
 const DIRS=[[-1,0],[0,1],[1,0],[0,-1]]; const OPP={0:2,1:3,2:0,3:1};
 const WORLD_COLORS={"Crystal Valley":"#38bdf8","Neon Forest":"#4ade80","Floating Islands":"#a78bfa","Frozen Dreams":"#93c5fd","Solar Kingdom":"#fbbf24","Shadow Dimension":"#e879f9"};
@@ -12521,10 +12577,10 @@ let DATA=null, idx=0, rots={}, dispRot={}, moves=0, hintsLeft=3, hintedKey=null,
 let limit=0;
 let elapsed=0, currentScreen="home";
 const cellEls={};
-function defaultSave(){ return {stars:{},settings:{sound:true,theme:"dark",unlockAll:false}}; }
+function defaultSave(){ return {stars:{},totalWins:0,settings:{sound:true,theme:"dark",unlockAll:false}}; }
 let save=defaultSave();
 if(IS_BROWSER){ try{ const raw=localStorage.getItem("lumora_save"); if(raw){ const p=JSON.parse(raw);
-  if(p&&typeof p==="object"){ save.stars=p.stars||{}; save.settings=Object.assign(defaultSave().settings,p.settings||{}); } } }catch(e){} }
+  if(p&&typeof p==="object"){ save.stars=p.stars||{}; save.totalWins=p.totalWins||0; save.settings=Object.assign(defaultSave().settings,p.settings||{}); } } }catch(e){} }
 let audioCtx=null;
 function persist(){ if(!IS_BROWSER)return; try{ localStorage.setItem("lumora_save",JSON.stringify(save)); }catch(e){} }
 function beep(freq){ if(!IS_BROWSER||!save.settings.sound)return; try{ audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)(); const o=audioCtx.createOscillator(),g=audioCtx.createGain(); o.frequency.value=freq||520; g.gain.value=0.06; o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+0.09);}catch(e){} }
@@ -12634,7 +12690,7 @@ function applyWorldTheme(lv){ const g=WORLD_GRADIENTS[lv.worldName]||["#a78bfa",
   document.documentElement.style.setProperty("--accent",g[0]); }
 function loadLevel(i){ idx=Math.max(0,Math.min(DATA.levels.length-1,i)); const lv=level();
   rots={}; dispRot={}; lv.tiles.forEach(t=>{ rots[t.r+","+t.c]=t.rotation; dispRot[t.r+","+t.c]=t.rotation*90; });
-  moves=0; hintsLeft=3; hintedKey=null; completed=false; failed=false; paused=false; elapsed=0;
+  moves=0; hintsLeft=3; hintedKey=null; completed=false; failed=false; paused=false; elapsed=0; adPending=false;
   limit=movesLimit(lv);
   applyWorldTheme(lv); buildBoard(); updateBoard();
   document.getElementById("pauseOverlay").classList.add("hidden");
@@ -12668,7 +12724,7 @@ function updateBoard(){ const lv=level();
   document.getElementById("failed").classList.toggle("hidden",!failed);
   if(failed){ document.getElementById("failedInfo").textContent=
     "Perfect solve: "+lv.parMoves+" moves · 3★ ≤ "+lv.starThresholds.threeStarMoves+" · 2★ ≤ "+lv.starThresholds.twoStarMoves; }
-  document.getElementById("complete").classList.toggle("hidden",!completed);
+  document.getElementById("complete").classList.toggle("hidden",!(completed&&!adPending));
   if(completed){ const st=starsFor(moves,lv);
     document.getElementById("stars").textContent="★".repeat(st)+"☆".repeat(3-st);
     document.getElementById("completeInfo").textContent="Solved in "+moves+" moves · "+fmtTime(elapsed);
@@ -12678,9 +12734,13 @@ function tap(t){ if(completed||failed||paused||currentScreen!=="game")return; if
   const lv=level(); const en=energized(rots);
   // Win is checked FIRST: a completing tap wins even if it crosses the limit.
   if(en.has(lv.portal.r+","+lv.portal.c)){ completed=true; const st=starsFor(moves,lv);
-    if(!save.stars[lv.id]||st>save.stars[lv.id])save.stars[lv.id]=st; persist(); playWinBand(); }
+    if(!save.stars[lv.id]||st>save.stars[lv.id])save.stars[lv.id]=st;
+    save.totalWins=(save.totalWins||0)+1; persist(); playWinBand();
+    // V4: every 3rd completion first shows the interstitial test ad; the
+    // Level Complete overlay waits behind it (adPending) until the ad closes.
+    adPending=adsOn()&&(save.totalWins%3===0); }
   else if(moves>limit){ failed=true; playFailSound(); }
-  updateBoard(); }
+  updateBoard(); if(adPending)showInterstitial(); }
 function hint(){ if(currentScreen!=="game"||completed||failed||paused)return;
   if(hintsLeft<=0){ document.getElementById("hintLine").textContent="No hints left for this level."; return; }
   const lv=level();
@@ -12693,6 +12753,95 @@ function hint(){ if(currentScreen!=="game"||completed||failed||paused)return;
 function giveUpSound(){ if(currentScreen==="game"&&!completed&&!failed&&moves>0)playFailSound(); }
 function tick(){ if(currentScreen==="game"&&!paused&&!completed&&!failed){ elapsed++;
   document.getElementById("timer").textContent="⏱ "+fmtTime(elapsed); } }
+
+/* ---------- V4: live remote config + campaigns (backend live channel) ----------
+   The full Node backend is not publicly hosted yet, so the game reads its live
+   config + owner campaigns from two JSON files published on GitHub Pages
+   (CORS *): remote-config.json and campaigns.json. PRIMARY first, MIRROR as
+   fallback, 4 s timeout per file. Accepted data is cached in localStorage
+   ("lumora_remote") as the last-known-good; total failure -> cache -> built-in
+   defaults + the built-in fallback test campaign. Fully offline-safe. */
+const REMOTE_BASES=[
+  "https://zm775487-source.github.io/Muhammad-Zohaib-/lumora-data/",
+  "https://zm775487-source.github.io/faheem-college-of-sciences/lumora-data/"];
+const REMOTE_DEFAULTS={version:0,maintenanceMode:false,adsEnabled:true,announcement:"",testAds:true};
+const FALLBACK_CAMPAIGN={emoji:"🎨",title:"Muhammad Zohaib — Digital Services",
+  text:"Websites • Logos • Videos for your business",ctaText:"Order on Fiverr",
+  destinationUrl:"https://www.fiverr.com/mzohaib763"};
+let remoteCfg=null, remoteCampaigns=[], backendLive=false, adPending=false, adCampaignNow=null, adCloseTimer=null;
+function escHtml(s){ return String(s==null?"":s).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch])); }
+function validConfig(c){ return !!c&&typeof c==="object"&&typeof c.version==="number"&&isFinite(c.version); }
+function validCampaigns(a){ if(!Array.isArray(a))return null;
+  return a.filter(c=>!!c&&typeof c==="object"&&c.active!==false&&
+    (c.placement==="home_banner"||c.placement==="interstitial")&&
+    (!c.destinationUrl||/^https:\/\//.test(c.destinationUrl))); }
+function adsOn(){ return !!remoteCfg&&!!remoteCfg.adsEnabled&&remoteCfg.testAds!==false; }
+function pickCampaign(placement){ const list=remoteCampaigns.filter(c=>c.placement===placement);
+  if(!list.length)return null;
+  return list.slice().sort((a,b)=>((b.priority||0)-(a.priority||0)))[0]; }
+function adCampaign(placement){ return pickCampaign(placement)||FALLBACK_CAMPAIGN; }
+async function fetchJsonTimeout(url){ const ctrl=new AbortController();
+  const to=setTimeout(()=>ctrl.abort(),4000);
+  try{ const r=await fetch(url,{signal:ctrl.signal,cache:"no-store"});
+    if(!r.ok)throw new Error("HTTP "+r.status); return await r.json(); }
+  finally{ clearTimeout(to); } }
+async function fetchRemoteFile(name){ for(const base of REMOTE_BASES){
+  try{ return await fetchJsonTimeout(base+name); }catch(e){} } return null; }
+async function loadRemote(){ if(!IS_BROWSER)return;
+  let cached=null;
+  try{ const raw=localStorage.getItem("lumora_remote"); if(raw)cached=JSON.parse(raw); }catch(e){}
+  let cfg=null, camps=null, live=false;
+  try{
+    const rawCfg=await fetchRemoteFile("remote-config.json");
+    if(validConfig(rawCfg)&&(!cached||!validConfig(cached.config)||rawCfg.version>=cached.config.version)){ cfg=rawCfg; live=true; }
+    const rawCamps=await fetchRemoteFile("campaigns.json");
+    if(rawCamps!=null){ const vc=validCampaigns(rawCamps); if(vc){ camps=vc; live=true; } }
+  }catch(e){}
+  if(cfg||camps){
+    const finalCfg=cfg||(cached&&validConfig(cached.config)?cached.config:null);
+    const finalCamps=camps||(cached&&Array.isArray(cached.campaigns)?cached.campaigns:[]);
+    if(finalCfg){ try{ localStorage.setItem("lumora_remote",JSON.stringify({config:finalCfg,campaigns:finalCamps})); }catch(e){}
+      applyRemote(finalCfg,finalCamps,live); return; }
+  }
+  if(cached&&validConfig(cached.config)){ applyRemote(cached.config,Array.isArray(cached.campaigns)?cached.campaigns:[],false); return; }
+  applyRemote(Object.assign({},REMOTE_DEFAULTS),[],false); }
+function applyRemote(cfg,campaigns,live){ remoteCfg=cfg; remoteCampaigns=campaigns||[]; backendLive=!!live;
+  const ann=document.getElementById("announce");
+  if(ann){ if(cfg.announcement){ ann.textContent=cfg.announcement; ann.classList.remove("hidden"); }
+    else ann.classList.add("hidden"); }
+  renderHomeAd();
+  const st=document.getElementById("backendStatus");
+  if(st)st.textContent=live?("Backend: Connected — live config v"+cfg.version):"Backend: Offline (using saved config)"; }
+function renderHomeAd(){ const el=document.getElementById("homeAd"); if(!el)return;
+  if(!adsOn()){ el.classList.add("hidden"); el.innerHTML=""; return; }
+  const c=adCampaign("home_banner");
+  el.innerHTML='<span class="ad-chip">TEST AD</span><div class="ad-main"><span class="ad-emoji">'+
+    escHtml(c.emoji||"📣")+'</span><span class="ad-text"><span class="ad-title">'+escHtml(c.title||c.name||"Special Offer")+
+    '</span><span class="ad-sub">'+escHtml(c.text||"")+'</span></span></div>'+
+    (c.destinationUrl?'<button type="button" class="ad-cta">'+escHtml(c.ctaText||"Open")+"</button>":"");
+  el.classList.remove("hidden");
+  const cta=el.querySelector(".ad-cta");
+  if(cta)cta.onclick=()=>{ try{ window.open(c.destinationUrl,"_blank"); }catch(e){} }; }
+function showInterstitial(){ const ov=document.getElementById("adOverlay"); if(!ov||!adsOn()){ adPending=false; updateBoard(); return; }
+  const c=adCampaign("interstitial"); adCampaignNow=c;
+  document.getElementById("adEmoji").textContent=c.emoji||"📣";
+  document.getElementById("adTitle").textContent=c.title||c.name||"Special Offer";
+  document.getElementById("adText").textContent=c.text||"";
+  const cta=document.getElementById("adCta");
+  cta.textContent=c.ctaText||"Open"; cta.style.display=c.destinationUrl?"":"none";
+  ov.classList.remove("hidden");
+  const closeBtn=document.getElementById("adClose"), count=document.getElementById("adCount");
+  let left=3; closeBtn.disabled=true; count.textContent=left;
+  if(adCloseTimer)clearInterval(adCloseTimer);
+  adCloseTimer=setInterval(()=>{ left--;
+    if(left<=0){ clearInterval(adCloseTimer); adCloseTimer=null; closeBtn.disabled=false; count.textContent=""; }
+    else count.textContent=left; },1000); }
+function closeInterstitial(openCta){ const ov=document.getElementById("adOverlay");
+  if(adCloseTimer){ clearInterval(adCloseTimer); adCloseTimer=null; }
+  if(ov)ov.classList.add("hidden");
+  if(openCta&&adCampaignNow&&adCampaignNow.destinationUrl){ try{ window.open(adCampaignNow.destinationUrl,"_blank"); }catch(e){} }
+  adCampaignNow=null;
+  if(adPending){ adPending=false; updateBoard(); } }
 
 /* ---------- data + init ---------- */
 async function loadData(){
@@ -12714,6 +12863,8 @@ async function init(){
   document.getElementById("pauseBtn").onclick=()=>{ if(completed||failed)return; paused=true; document.getElementById("pauseOverlay").classList.remove("hidden"); };
   document.getElementById("resumeBtn").onclick=()=>{ paused=false; document.getElementById("pauseOverlay").classList.add("hidden"); };
   document.getElementById("pauseLevelsBtn").onclick=()=>{ giveUpSound(); paused=false; document.getElementById("pauseOverlay").classList.add("hidden"); showScreen("levels"); };
+  document.getElementById("adClose").onclick=()=>closeInterstitial(false);
+  document.getElementById("adCta").onclick=()=>closeInterstitial(true);
   document.getElementById("failedRetryBtn").onclick=()=>loadLevel(idx);
   document.getElementById("failedLevelsBtn").onclick=()=>showScreen("levels");
   document.getElementById("nextBtn").onclick=()=>{ if(idx<DATA.levels.length-1)openLevel(idx+1); else showScreen("levels"); };
@@ -12727,6 +12878,7 @@ async function init(){
   unlockT.onchange=e=>{ save.settings.unlockAll=e.target.checked; persist(); };
   document.getElementById("resetBtn").onclick=()=>{ if(confirm("Reset all LUMORA progress?")){ const st=save.settings; save=defaultSave(); save.settings=st; persist(); updateHome(); } };
   setInterval(tick,1000);
+  loadRemote(); // non-blocking: local play starts immediately, config applies when it lands
   showScreen("home");
 }
 if(IS_BROWSER)document.addEventListener("DOMContentLoaded",init);

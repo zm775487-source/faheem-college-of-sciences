@@ -1,0 +1,53 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LUMORA Admin Dashboard (Foundation)</title>
+<style>body{font-family:system-ui,Arial;margin:0;background:#0f0c1d;color:#f4f1ff}header{padding:16px 20px;background:#1b1533}main{max-width:1000px;margin:auto;padding:16px}.card{background:#1b1533;border-radius:12px;padding:16px;margin:12px 0}button{background:#7c3aed;color:#fff;border:0;border-radius:8px;padding:8px 12px;cursor:pointer;margin:2px}button.danger{background:#dc2626}input,select{padding:8px;border-radius:8px;border:1px solid #7c3aed;background:#0f0c1d;color:#fff}table{width:100%;border-collapse:collapse}td,th{padding:6px;border-bottom:1px solid #ffffff22;text-align:left}@media(max-width:600px){table{font-size:13px}}</style></head>
+<body><header><h2>✨ LUMORA — Admin Dashboard</h2><div>Foundation build · Production target: React + TypeScript (docs/03) · Local mode: changes save in this browser. Use the Publish section to send them live to the game via Muse.</div></header>
+<main>
+<section class="card"><h3>1 · Overview</h3><p id="overview">Loading…</p></section>
+<section class="card"><h3>2 · Campaign Management (4+ slots)</h3>
+<input id="cName" placeholder="Campaign name"> <input id="cUrl" placeholder="https:// destination (allowlisted hosts only in real API)" size="34">
+<select id="cPlacement"><option>interstitial</option><option>rewarded</option><option>banner</option><option>app_open</option><option>owner_promo</option></select>
+<button onclick="addCampaign()">Add Campaign</button><div id="campaigns"></div></section>
+<section class="card"><h3>3 · Levels (50)</h3><div id="levels">Loading levels… (serve the <code>lumora/</code> folder over HTTP; file:// blocks fetch)</div></section>
+<section class="card"><h3>4 · Remote Configuration</h3><pre id="remoteCfg">Loading…</pre><button onclick="toggleMaintenance()">Toggle Maintenance Mode</button></section>
+<section class="card"><h3>5 · Server Health</h3><p>Backend live check: <span id="health">NOT TESTED from this static page — run <code>cd backend && npm test</code> (8 API tests) or start <code>node src/index.js</code> and open <code>/health</code>.</span></p><button onclick="checkHealth()">Try Live Check (localhost:8080)</button></section>
+<section class="card"><h3>6 · 📡 Publish to Game (Live Config)</h3>
+<p>Download the two live-channel files in the exact shape the game reads, then:</p>
+<p><b>Send the downloaded files to Muse in chat — Muse publishes them to the live channel and the game picks them up automatically.</b></p>
+<button onclick="downloadCampaigns()">⬇ Download campaigns.json</button> <button onclick="downloadConfig()">⬇ Download remote-config.json</button> <button onclick="loadSampleCampaign()">＋ Load sample campaign</button>
+<p style="opacity:.75">Each config download bumps the version by +1 (the game only accepts a version &ge; the one it already has). Campaign priority is set by list order — first campaign wins its placement.</p></section>
+</main>
+<script>
+let campaigns=JSON.parse(localStorage.getItem("lumora_campaigns")||"[]");
+let cfg=JSON.parse(localStorage.getItem("lumora_remotefg")||'{"version":1,"maintenanceMode":false,"adsEnabled":true,"announcement":"Welcome to LUMORA"}');
+function persist(){localStorage.setItem("lumora_campaigns",JSON.stringify(campaigns));localStorage.setItem("lumora_remotefg",JSON.stringify(cfg));}
+function renderCampaigns(){ const el=document.getElementById("campaigns");
+ if(!campaigns.length){el.innerHTML="<p>No campaigns yet — add one above.</p>";return;}
+ el.innerHTML="<table><tr><th>#</th><th>Name</th><th>Placement</th><th>URL</th><th>Status</th><th>Actions</th></tr>"+
+ campaigns.map((c,i)=>"<tr><td>"+(i+1)+"</td><td>"+esc(c.name)+"</td><td>"+esc(c.placement)+"</td><td>"+esc(c.destinationUrl||"—")+"</td><td>"+(c.active?"Active":"Paused")+"</td><td><button onclick='toggleCampaign("+i+")'>"+(c.active?"Pause":"Resume")+"</button> <button onclick='editCampaign("+i+")'>Edit</button> <button class='danger' onclick='delCampaign("+i+")'>Delete</button></td></tr>").join("")+"</table>"; }
+function esc(s){const d=document.createElement("div");d.textContent=String(s);return d.innerHTML;}
+function addCampaign(){ const name=document.getElementById("cName").value.trim(); if(name.length<2){alert("Campaign name required.");return;}
+ campaigns.push({id:Date.now(),name,destinationUrl:document.getElementById("cUrl").value.trim()||null,placement:document.getElementById("cPlacement").value,active:true,priority:10,frequencyLimit:3}); persist(); renderCampaigns(); renderOverview(); }
+function toggleCampaign(i){campaigns[i].active=!campaigns[i].active;persist();renderCampaigns();renderOverview();}
+function delCampaign(i){ if(confirm("Delete campaign '"+campaigns[i].name+"'?")){campaigns.splice(i,1);persist();renderCampaigns();renderOverview();} }
+function editCampaign(i){ const n=prompt("Campaign name:",campaigns[i].name); if(n===null)return; const u=prompt("Destination URL:",campaigns[i].destinationUrl||""); if(u===null)return; campaigns[i].name=n; campaigns[i].destinationUrl=u||null; persist(); renderCampaigns(); }
+function toggleMaintenance(){ cfg.maintenanceMode=!cfg.maintenanceMode; cfg.version++; persist(); renderCfg(); }
+function renderCfg(){ document.getElementById("remoteCfg").textContent=JSON.stringify(cfg,null,2)+"  (local copy — use section 6 to publish it live; the hosted API equivalent is GET/POST /api/v1/remote-config, versioned with last-known-good)"; }
+/* --- Publish to Game: serialize local state into the live-channel shapes --- */
+function downloadJson(name,obj){ const blob=new Blob([JSON.stringify(obj,null,2)],{type:"application/json"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),3000); }
+function campaignForPublish(c,i){ const pl=(c.placement==="home_banner"||c.placement==="interstitial")?c.placement:"interstitial";
+ return {id:c.id,name:c.name,type:c.type||"owner_promo",placement:pl,title:c.title||c.name,text:c.text||"",ctaText:c.ctaText||"Open",destinationUrl:c.destinationUrl||"",emoji:c.emoji||"📣",active:c.active!==false,priority:(campaigns.length-i)*10,startDate:c.startDate||null,endDate:c.endDate||null}; }
+function downloadCampaigns(){ downloadJson("campaigns.json",campaigns.map(campaignForPublish)); }
+function downloadConfig(){ cfg.version=(cfg.version||0)+1; persist(); renderCfg(); renderOverview();
+ downloadJson("remote-config.json",{version:cfg.version,maintenanceMode:!!cfg.maintenanceMode,adsEnabled:cfg.adsEnabled!==false,announcement:cfg.announcement||"",testAds:true}); }
+const SAMPLE_CAMPAIGN={name:"Muhammad Zohaib — Digital Services",title:"Muhammad Zohaib — Digital Services",text:"Websites • Logos • Videos for your business",ctaText:"Order on Fiverr",destinationUrl:"https://www.fiverr.com/mzohaib763",placement:"home_banner",emoji:"🎨",type:"owner_promo"};
+function loadSampleCampaign(){ if(campaigns.some(c=>(c.title||c.name)===SAMPLE_CAMPAIGN.title)){ alert("Sample campaign is already in the list."); return; }
+ campaigns.push(Object.assign({id:Date.now(),active:true,priority:10,frequencyLimit:3},SAMPLE_CAMPAIGN)); persist(); renderCampaigns(); renderOverview(); }
+function renderOverview(levelCount){ document.getElementById("overview").textContent="Levels: "+(levelCount??"—")+" · Campaigns: "+campaigns.length+" ("+campaigns.filter(c=>c.active).length+" active) · Worlds: 6 · Remote config v"+cfg.version+" · Maintenance: "+(cfg.maintenanceMode?"ON":"OFF"); }
+async function checkHealth(){ const el=document.getElementById("health"); try{ const r=await fetch("http://localhost:8080/health"); const j=await r.json(); el.textContent="LIVE: "+JSON.stringify(j); }catch(e){ el.textContent="NOT REACHABLE — backend is not running on localhost:8080 right now (this is expected in local mode)."; } }
+async function loadLevels(){ const urls=["../web/data/levels.json","data/levels.json","/web/data/levels.json"];
+ for(const u of urls){ try{ const r=await fetch(u); if(!r.ok)continue; const d=await r.json();
+   document.getElementById("levels").innerHTML="<table><tr><th>ID</th><th>World</th><th>Difficulty</th><th>Grid</th><th>Par</th></tr>"+d.levels.map(l=>"<tr><td>"+l.id+"</td><td>"+esc(l.worldName)+"</td><td>"+l.difficulty+"</td><td>"+l.gridRows+"×"+l.gridCols+"</td><td>"+l.parMoves+"</td></tr>").join("")+"</table>"; renderOverview(d.levels.length); return; }catch(e){} }
+ document.getElementById("levels").textContent="Could not fetch levels.json — serve the lumora/ folder over HTTP (python3 -m http.server from ~/workspace/lumora) and reload. Data file: web/data/levels.json (50 levels, validated)."; renderOverview(50); }
+renderCampaigns(); renderCfg(); renderOverview(); loadLevels();
+</script></body></html>
